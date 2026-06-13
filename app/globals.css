@@ -1,0 +1,113 @@
+/* ──────────────────────────────────────────────
+   Handy Pro — Design system "Bottega"
+   Fonts: Inter (UI) + Playfair Display Italic (accento)
+   ────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #152238;
+  --ink-mute: #5c6b82;
+  --cream: #faf6f0;
+  --sand: #f1eae0;
+  --ember: #f5821f;
+  --line: #e9e2d8;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Base ── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--ink);
+  background-color: var(--cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  line-height: 1.5;
+  background-color: var(--cream);
+}
+
+img,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--ember);
+  color: #fff;
+}
+
+/* Focus visibile e coerente (accessibilità) */
+:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Utilities ── */
+@layer utilities {
+  /* Parola accento in Playfair italic */
+  .font-accent {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  /* Nasconde la scrollbar mantenendo lo scroll (carousel mobile) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Padding per la bottom nav su mobile (+ safe area iOS) */
+  .pb-bottom-nav {
+    padding-bottom: calc(76px + var(--safe-bottom));
+  }
+  @media (min-width: 768px) {
+    .pb-bottom-nav {
+      padding-bottom: 0;
+    }
+  }
+
+  /* Tocco app-like: feedback al press */
+  .pressable {
+    transition: transform 0.15s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.2s ease,
+      background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+  .pressable:active {
+    transform: scale(0.97);
+  }
+}
+
+/* ── Leaflet: coerenza con il design system ── */
+.leaflet-container {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #efe9df; /* fallback caldo mentre le tile caricano */
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 8px 28px -8px rgba(21, 34, 56, 0.3);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+}

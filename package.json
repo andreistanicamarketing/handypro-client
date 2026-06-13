@@ -1,0 +1,35 @@
+{
+  "name": "handy-pro-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5",
+    "clsx": "latest",
+    "leaflet": "^1.9",
+    "lucide-react": "latest",
+    "next": "^14.2.29",
+    "next-auth": "^4",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-leaflet": "^4",
+    "tailwind-merge": "latest"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "latest",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.29",
+    "postcss": "latest",
+    "tailwindcss": "^3",
+    "typescript": "^5"
+  }
+}
