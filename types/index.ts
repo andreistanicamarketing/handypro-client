@@ -100,7 +100,10 @@ export interface SearchResult {
 
 export interface AuthResponse {
   token: string;
-  user: Pick<User, 'id' | 'email' | 'role' | 'firstName' | 'lastName'>;
+  user: Pick<User, 'id' | 'email' | 'role' | 'firstName' | 'lastName'> & {
+    location?: string;
+    proSlug?: string;
+  };
 }
 
 export interface LoginRequest {
