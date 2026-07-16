@@ -15,6 +15,8 @@ export interface MockSession {
   role: UserRole;
   /** Solo per professionisti: slug del profilo pubblico */
   proSlug?: string;
+  /** JWT del backend, per le chiamate autenticate a lib/data.ts */
+  accessToken: string;
 }
 
 /** Account demo creati dal seeder del backend — credenziali mostrate nella pagina di accesso */
@@ -45,6 +47,7 @@ export async function login(email: string, password: string): Promise<MockSessio
     email: session.user.email ?? '',
     role: session.user.role,
     proSlug: session.user.proSlug,
+    accessToken: session.accessToken,
   };
 }
 
@@ -85,6 +88,7 @@ export function useSession(): { session: MockSession | null; ready: boolean } {
         email: data.user.email ?? '',
         role: data.user.role,
         proSlug: data.user.proSlug,
+        accessToken: data.accessToken,
       }
     : null;
   return { session, ready: status !== 'loading' };

@@ -32,3 +32,42 @@ export function slugify(text: string): string {
     .trim()
     .replace(/\s+/g, '-');
 }
+
+// ── Formattazione date (it-IT) ───────────────────────────────────
+
+const DAY_NAMES = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
+const MONTH_NAMES = [
+  'gen', 'feb', 'mar', 'apr', 'mag', 'giu',
+  'lug', 'ago', 'set', 'ott', 'nov', 'dic',
+];
+
+export function formatDayShort(date: Date): { dayName: string; dayNum: string } {
+  return {
+    dayName: DAY_NAMES[date.getDay()],
+    dayNum: `${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`,
+  };
+}
+
+export function formatDayLong(date: Date): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.round((date.getTime() - today.getTime()) / 86400000);
+  if (diff === 0) return 'Oggi';
+  if (diff === 1) return 'Domani';
+  return `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
+}
+
+/** "oggi", "3 giorni fa", "un mese fa", "4 mesi fa" — per le recensioni. */
+export function timeAgo(date: Date): string {
+  const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
+  if (days === 0) return 'oggi';
+  if (days === 1) return 'ieri';
+  if (days < 30) return `${days} giorni fa`;
+  const months = Math.round(days / 30);
+  return months <= 1 ? 'un mese fa' : `${months} mesi fa`;
+}
+
+/** Date → "yyyy-MM-dd" in ora LOCALE (mai toISOString: slitta di giorno col fuso). */
+export function toDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
