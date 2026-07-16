@@ -6,7 +6,8 @@ import {
   ShieldCheck, CalendarCheck, Search as SearchIcon, Star, ArrowRight, MapPin,
 } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
-import { CATEGORIES, PROS } from '@/lib/mock-data';
+import { CATEGORIES } from '@/lib/categories';
+import { searchPros, type Pro } from '@/lib/data';
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Droplets, Zap, BrickWall, Hammer, Leaf, PaintRoller, Wind, KeyRound,
@@ -14,9 +15,18 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 
 const PRICE_LABEL = { low: '€', medium: '€€', high: '€€€' } as const;
 
-export default function HomePage() {
-  const totalReviews = PROS.reduce((acc, p) => acc + p.reviewCount, 0);
-  const topPros = [...PROS].sort((a, b) => b.rating - a.rating).slice(0, 6);
+export default async function HomePage() {
+  let topPros: Pro[] = [];
+  let totalPros = 0;
+  let totalReviews = 0;
+  try {
+    const { pros, total } = await searchPros({});
+    totalPros = total;
+    totalReviews = pros.reduce((acc, p) => acc + p.reviewCount, 0);
+    topPros = [...pros].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 6);
+  } catch {
+    // backend giù: la home renderizza senza sezione "I più richiesti"
+  }
 
   return (
     <>
@@ -98,81 +108,83 @@ export default function HomePage() {
       </section>
 
       {/* ── I più richiesti ──────────────────────────────────────────── */}
-      <section className="mx-auto mt-14 max-w-content md:mt-24 md:px-8">
-        <div className="mb-5 flex items-end justify-between px-5 md:px-0">
-          <div>
-            <h2 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
-              I più <em className="font-accent text-ember-deep">richiesti</em>
-            </h2>
-            <p className="mt-1 text-[14px] text-ink-mute">
-              I professionisti meglio recensiti della tua zona.
-            </p>
+      {topPros.length > 0 && (
+        <section className="mx-auto mt-14 max-w-content md:mt-24 md:px-8">
+          <div className="mb-5 flex items-end justify-between px-5 md:px-0">
+            <div>
+              <h2 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
+                I più <em className="font-accent text-ember-deep">richiesti</em>
+              </h2>
+              <p className="mt-1 text-[14px] text-ink-mute">
+                I professionisti meglio recensiti della tua zona.
+              </p>
+            </div>
+            <Link
+              href="/cerca"
+              className="hidden shrink-0 items-center gap-1 text-[14px] font-bold text-ink hover:text-ember-deep md:inline-flex"
+            >
+              Vedi tutti <ArrowRight size={15} />
+            </Link>
           </div>
-          <Link
-            href="/cerca"
-            className="hidden shrink-0 items-center gap-1 text-[14px] font-bold text-ink hover:text-ember-deep md:inline-flex"
-          >
-            Vedi tutti <ArrowRight size={15} />
-          </Link>
-        </div>
 
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 scrollbar-hide md:grid md:grid-cols-3 md:gap-4 md:px-0">
-          {topPros.map((pro) => {
-            const initials = pro.name.split(' ').map((w) => w[0]).slice(0, 2).join('');
-            return (
-              <Link
-                key={pro.id}
-                href={`/pro/${pro.slug}`}
-                className="pressable w-[240px] shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-chip hover:border-ember hover:shadow-soft md:w-auto md:p-5"
-              >
-                <div className="mb-3 flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[15px] font-extrabold text-white"
-                    style={{ background: `hsl(${pro.hue} 42% 42%)` }}
-                  >
-                    {initials}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-[15px] font-bold text-ink">{pro.name}</span>
-                      {pro.isVerified && (
-                        <ShieldCheck size={14} className="shrink-0 text-verde" aria-label="Verificato" />
-                      )}
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 scrollbar-hide md:grid md:grid-cols-3 md:gap-4 md:px-0">
+            {topPros.map((pro) => {
+              const initials = pro.name.split(' ').map((w) => w[0]).slice(0, 2).join('');
+              return (
+                <Link
+                  key={pro.id}
+                  href={`/pro/${pro.slug}`}
+                  className="pressable w-[240px] shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-chip hover:border-ember hover:shadow-soft md:w-auto md:p-5"
+                >
+                  <div className="mb-3 flex items-center gap-3">
+                    <span
+                      aria-hidden
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[15px] font-extrabold text-white"
+                      style={{ background: `hsl(${pro.hue} 42% 42%)` }}
+                    >
+                      {initials}
                     </span>
-                    <span className="block truncate text-[12.5px] text-ink-mute">
-                      {pro.categoryLabel} · {pro.specialization}
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-[15px] font-bold text-ink">{pro.name}</span>
+                        {pro.isVerified && (
+                          <ShieldCheck size={14} className="shrink-0 text-verde" aria-label="Verificato" />
+                        )}
+                      </span>
+                      <span className="block truncate text-[12.5px] text-ink-mute">
+                        {pro.categoryLabel} · {pro.specialization}
+                      </span>
                     </span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[13px]">
-                  <span className="inline-flex items-center gap-1 font-bold text-ink">
-                    <Star size={13} className="fill-ember text-ember" />
-                    {pro.rating.toFixed(1)}
-                    <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-ink-mute">
-                    <MapPin size={13} />
-                    {pro.zona}
-                  </span>
-                  <span className="ml-auto font-bold text-ink-mute">
-                    {PRICE_LABEL[pro.priceRange]}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-[13px]">
+                    <span className="inline-flex items-center gap-1 font-bold text-ink">
+                      <Star size={13} className="fill-ember text-ember" />
+                      {(pro.rating ?? 0).toFixed(1)}
+                      <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-ink-mute">
+                      <MapPin size={13} />
+                      {pro.zona}
+                    </span>
+                    <span className="ml-auto font-bold text-ink-mute">
+                      {PRICE_LABEL[pro.priceRange]}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
 
-        <div className="mt-4 px-5 md:hidden">
-          <Link
-            href="/cerca"
-            className="pressable flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-line bg-white text-[14.5px] font-bold text-ink shadow-chip"
-          >
-            Vedi tutti i professionisti <ArrowRight size={15} />
-          </Link>
-        </div>
-      </section>
+          <div className="mt-4 px-5 md:hidden">
+            <Link
+              href="/cerca"
+              className="pressable flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-line bg-white text-[14.5px] font-bold text-ink shadow-chip"
+            >
+              Vedi tutti i professionisti <ArrowRight size={15} />
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ── Come funziona ────────────────────────────────────────────── */}
       <section className="mx-auto mt-16 max-w-content px-5 md:mt-28 md:px-8">
@@ -246,7 +258,7 @@ export default function HomePage() {
 
             <div className="mt-8 grid grid-cols-3 gap-3 md:mt-0 md:w-[320px] md:shrink-0 md:grid-cols-1">
               {[
-                { value: `${PROS.length}+`, label: 'Professionisti' },
+                { value: `${totalPros}+`, label: 'Professionisti' },
                 { value: `${totalReviews}+`, label: 'Recensioni verificate' },
                 { value: '4.7 ★', label: 'Valutazione media' },
               ].map((s) => (
