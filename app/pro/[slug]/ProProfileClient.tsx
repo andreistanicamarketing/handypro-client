@@ -54,7 +54,7 @@ export default function ProProfileClient({
             {/* Header */}
             <section className="rounded-card border border-line bg-white p-5 shadow-chip md:p-6">
               <div className="flex gap-4">
-                <ProInitialsAvatar pro={pro} size={72} />
+                <ProInitialsAvatar name={pro.name} hue={pro.hue} size={72} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
@@ -219,7 +219,7 @@ export default function ProProfileClient({
               <p className="mb-3 text-[12.5px] text-ink-mute">
                 Tocca un orario per prenotare subito.
               </p>
-              <AvailabilityGrid proId={pro.id} proSlug={pro.slug} visibleDays={4} />
+              <AvailabilityGrid proSlug={pro.slug} visibleDays={4} />
               <button
                 type="button"
                 onClick={() => setBookingOpen(true)}

@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { List, Map as MapIcon, X, BadgeCheck } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
 import ProResultCard from '@/components/search/ProResultCard';
 import MapView from '@/components/map/MapView';
-import { CATEGORIES, searchPros } from '@/lib/mock-data';
+import { CATEGORIES } from '@/lib/categories';
+import { searchPros, type Pro } from '@/lib/data';
 import type { PriceRange } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -28,28 +29,40 @@ export default function CercaClient() {
     return match?.slug ?? '';
   }, [categoria, q]);
 
-  const results = useMemo(
-    () =>
-      searchPros({
-        category: resolvedCategory || undefined,
-        city: zona || undefined,
-        priceRange: priceFilter || undefined,
-        verifiedOnly,
-      }),
-    [resolvedCategory, zona, priceFilter, verifiedOnly]
-  );
+  const [results, setResults] = useState<Pro[] | null>(null); // null = loading
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    setResults(null);
+    setError(null);
+    searchPros({
+      category: resolvedCategory || undefined,
+      city: zona || undefined,
+      priceRange: priceFilter || undefined,
+      verifiedOnly: verifiedOnly || undefined,
+    })
+      .then((r) => alive && setResults(r.pros))
+      .catch((e) => alive && setError(e instanceof Error ? e.message : 'Errore di rete'));
+    return () => {
+      alive = false;
+    };
+  }, [resolvedCategory, zona, priceFilter, verifiedOnly, reloadKey]);
 
   const categoryLabel = CATEGORIES.find((c) => c.slug === resolvedCategory)?.label;
   const hasActiveFilters = Boolean(priceFilter) || verifiedOnly;
 
-  const markers = results.map((p) => ({
-    id: p.id,
-    lat: p.lat,
-    lon: p.lon,
-    label: p.name,
-    sublabel: `${p.categoryLabel} · ${p.zona}`,
-    href: `/pro/${p.slug}`,
-  }));
+  const markers = (results ?? [])
+    .filter((p) => p.lat !== null && p.lon !== null)
+    .map((p) => ({
+      id: p.id,
+      lat: p.lat!,
+      lon: p.lon!,
+      label: p.name,
+      sublabel: `${p.categoryLabel} · ${p.zona}`,
+      href: `/pro/${p.slug}`,
+    }));
 
   const filterChip = (active: boolean) =>
     cn(
@@ -130,12 +143,30 @@ export default function CercaClient() {
             ) : null}
           </h1>
           <p className="mb-4 text-[13px] font-medium text-ink-mute">
-            {results.length}{' '}
-            {results.length === 1 ? 'professionista disponibile' : 'professionisti disponibili'} ·
+            {results === null ? '…' : results.length}{' '}
+            {results?.length === 1 ? 'professionista disponibile' : 'professionisti disponibili'} ·
             prenotazione online
           </p>
 
-          {results.length === 0 ? (
+          {error ? (
+            <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+              <p className="mb-1 font-bold text-ink">Impossibile caricare i risultati</p>
+              <p className="mb-4 text-[14px] text-ink-mute">{error}</p>
+              <button
+                type="button"
+                onClick={() => setReloadKey((k) => k + 1)}
+                className="pressable h-11 rounded-2xl bg-ink px-5 text-[14px] font-bold text-white"
+              >
+                Riprova
+              </button>
+            </div>
+          ) : results === null ? (
+            <div className="flex flex-col gap-3.5" aria-label="Caricamento risultati">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-[210px] animate-pulse rounded-card border border-line bg-white/70 shadow-chip" />
+              ))}
+            </div>
+          ) : results.length === 0 ? (
             <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
               <p className="mb-1 font-bold text-ink">Nessun risultato</p>
               <p className="text-[14px] text-ink-mute">

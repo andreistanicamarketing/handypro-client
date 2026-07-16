@@ -173,7 +173,7 @@ export default function UtenteClient() {
 
                   {/* pro + servizio */}
                   <Link href={`/pro/${pro.slug}`} className="group flex items-center gap-3">
-                    <ProInitialsAvatar pro={pro} size={48} />
+                    <ProInitialsAvatar name={pro.name} hue={pro.hue} size={48} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-bold text-ink group-hover:text-ember-deep">
                         {b.service}
