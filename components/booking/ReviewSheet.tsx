@@ -1,7 +1,7 @@
 'use client';
 
 // Sheet recensione verificata: stelle + testo, poi conferma.
-// Disponibile solo per lavori completati (mock).
+// Disponibile solo per lavori completati.
 
 import { useEffect, useState } from 'react';
 import { X, Star, BadgeCheck, CheckCircle2 } from 'lucide-react';
@@ -12,7 +12,7 @@ interface ReviewSheetProps {
   proName: string;
   jobLabel: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string) => void;
+  onSubmit: (rating: number, text: string) => Promise<string | null>;
 }
 
 const RATING_LABELS = ['', 'Pessimo', 'Scarso', 'Nella media', 'Molto buono', 'Eccellente'];
@@ -27,6 +27,8 @@ export default function ReviewSheet({
   const [rating, setRating] = useState(0);
   const [text, setText] = useState('');
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -40,6 +42,8 @@ export default function ReviewSheet({
       setRating(0);
       setText('');
       setSent(false);
+      setSending(false);
+      setError(null);
     }
   }, [open]);
 
@@ -141,7 +145,7 @@ export default function ReviewSheet({
               </p>
 
               <label htmlFor="rv-text" className="mb-1 block text-[13px] font-bold text-ink">
-                Racconta com&rsquo;è andata <span className="font-medium text-ink-faint">(facoltativo)</span>
+                Racconta com&rsquo;è andata <span className="font-medium text-ink-faint">(minimo 10 caratteri)</span>
               </label>
               <textarea
                 id="rv-text"
@@ -152,16 +156,26 @@ export default function ReviewSheet({
                 className="mb-4 w-full resize-none rounded-xl border border-line bg-white p-3.5 text-[15px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember"
               />
 
+              {error && (
+                <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-[13px] font-semibold text-red-500">
+                  {error}
+                </p>
+              )}
+
               <button
                 type="button"
-                disabled={rating === 0}
-                onClick={() => {
-                  onSubmit(rating, text);
-                  setSent(true);
+                disabled={rating === 0 || text.trim().length < 10 || sending}
+                onClick={async () => {
+                  setSending(true);
+                  setError(null);
+                  const err = await onSubmit(rating, text.trim());
+                  setSending(false);
+                  if (err) setError(err);
+                  else setSent(true);
                 }}
                 className="pressable h-12 w-full rounded-2xl bg-ember-gradient text-[15px] font-bold text-white disabled:opacity-40"
               >
-                Pubblica recensione
+                {sending ? 'Invio…' : 'Pubblica recensione'}
               </button>
             </>
           )}

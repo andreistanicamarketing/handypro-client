@@ -1,42 +1,40 @@
 'use client';
 
 // Area utente mobile-first: prenotazioni in programma e completate,
-// annullamento e recensione verificata (tutto mock lato client).
+// annullamento e recensione verificata (dati reali da backend).
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, areaForRole } from '@/lib/auth-mock';
 import {
-  CalendarDays, Clock, MapPin, Star, ChevronRight, Search,
-  CheckCircle2, Hourglass, BadgeCheck, Plus,
+  CalendarDays, Clock, Star, ChevronRight, Search,
+  CheckCircle2, Hourglass, BadgeCheck, Plus, X,
 } from 'lucide-react';
-import {
-  USER_BOOKINGS, getBookingDate, getProBySlug, PROS, formatDayLong,
-  type MockBooking, type MockPro,
-} from '@/lib/mock-data';
+import { getMyBookings, cancelBooking as apiCancelBooking, createReview, hueFromSlug, type UserBooking } from '@/lib/data';
 import { ProInitialsAvatar } from '@/components/search/ProResultCard';
 import ReviewSheet from '@/components/booking/ReviewSheet';
-import { cn } from '@/lib/utils';
+import { cn, formatDayLong } from '@/lib/utils';
 
 type Tab = 'prossimi' | 'completati';
-
-function getPro(proId: string): MockPro {
-  return PROS.find((p) => p.id === proId)!;
-}
 
 const STATUS_META = {
   pending: { label: 'In attesa di conferma', icon: Hourglass, cls: 'bg-ember-soft text-ember-deep' },
   confirmed: { label: 'Confermato', icon: CheckCircle2, cls: 'bg-verde-soft text-verde' },
   completed: { label: 'Completato', icon: CheckCircle2, cls: 'bg-sand text-ink-mute' },
+  cancelled: { label: 'Annullata', icon: X, cls: 'bg-sand text-ink-faint' },
 } as const;
 
 export default function UtenteClient() {
   const router = useRouter();
   const { session, ready } = useSession();
   const [tab, setTab] = useState<Tab>('prossimi');
-  const [bookings, setBookings] = useState<MockBooking[]>(USER_BOOKINGS);
-  const [reviewFor, setReviewFor] = useState<MockBooking | null>(null);
+  const [bookings, setBookings] = useState<UserBooking[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [reviewFor, setReviewFor] = useState<UserBooking | null>(null);
+
+  const token = session?.accessToken;
 
   // Guard: solo clienti loggati
   useEffect(() => {
@@ -45,18 +43,31 @@ export default function UtenteClient() {
     else if (session.role !== 'privato') router.replace(areaForRole(session.role));
   }, [ready, session, router]);
 
+  useEffect(() => {
+    if (!token || session?.role !== 'privato') return;
+    let alive = true;
+    setBookings(null);
+    setError(null);
+    getMyBookings(token)
+      .then((b) => alive && setBookings(b))
+      .catch((e) => alive && setError(e instanceof Error ? e.message : 'Errore di rete'));
+    return () => {
+      alive = false;
+    };
+  }, [token, session?.role, reloadKey]);
+
   const upcoming = useMemo(
     () =>
-      bookings
-        .filter((b) => b.status !== 'completed')
-        .sort((a, b) => a.dayOffset - b.dayOffset),
+      (bookings ?? [])
+        .filter((b) => b.status === 'pending' || b.status === 'confirmed')
+        .sort((a, b) => a.date.getTime() - b.date.getTime()),
     [bookings]
   );
   const completed = useMemo(
     () =>
-      bookings
-        .filter((b) => b.status === 'completed')
-        .sort((a, b) => b.dayOffset - a.dayOffset),
+      (bookings ?? [])
+        .filter((b) => b.status === 'completed' || b.status === 'cancelled')
+        .sort((a, b) => b.date.getTime() - a.date.getTime()),
     [bookings]
   );
 
@@ -64,12 +75,14 @@ export default function UtenteClient() {
 
   if (!ready || !session || session.role !== 'privato') return null;
 
-  function cancelBooking(id: string) {
-    setBookings((prev) => prev.filter((b) => b.id !== id));
-  }
-
-  function markReviewed(id: string) {
-    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, reviewed: true } : b)));
+  async function handleCancel(id: string) {
+    if (!token) return;
+    try {
+      await apiCancelBooking(token, id);
+      setBookings((prev) => prev && prev.map((b) => (b.id === id ? { ...b, status: 'cancelled' as const } : b)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Errore di rete');
+    }
   }
 
   return (
@@ -118,7 +131,25 @@ export default function UtenteClient() {
         </div>
 
         {/* lista */}
-        {list.length === 0 ? (
+        {error ? (
+          <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+            <p className="mb-1 font-bold text-ink">Impossibile caricare le prenotazioni</p>
+            <p className="mb-4 text-[14px] text-ink-mute">{error}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="pressable h-11 rounded-2xl bg-ink px-5 text-[14px] font-bold text-white"
+            >
+              Riprova
+            </button>
+          </div>
+        ) : bookings === null ? (
+          <div className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-[190px] animate-pulse rounded-card border border-line bg-white/70 shadow-chip" />
+            ))}
+          </div>
+        ) : list.length === 0 ? (
           <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
             <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sand text-ink-mute">
               <CalendarDays size={24} />
@@ -144,9 +175,8 @@ export default function UtenteClient() {
         ) : (
           <ul className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {list.map((b) => {
-              const pro = getPro(b.proId);
-              const date = getBookingDate(b);
               const status = STATUS_META[b.status];
+              const canAct = b.status === 'pending' || b.status === 'confirmed';
               return (
                 <li
                   key={b.id}
@@ -172,14 +202,14 @@ export default function UtenteClient() {
                   </div>
 
                   {/* pro + servizio */}
-                  <Link href={`/pro/${pro.slug}`} className="group flex items-center gap-3">
-                    <ProInitialsAvatar name={pro.name} hue={pro.hue} size={48} />
+                  <Link href={`/pro/${b.proSlug}`} className="group flex items-center gap-3">
+                    <ProInitialsAvatar name={b.proName} hue={hueFromSlug(b.proSlug)} size={48} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-bold text-ink group-hover:text-ember-deep">
                         {b.service}
                       </span>
                       <span className="block truncate text-[13px] text-ink-mute">
-                        {pro.name} · {pro.categoryLabel}
+                        {b.proName}
                       </span>
                     </span>
                     <ChevronRight size={17} className="shrink-0 text-ink-faint" />
@@ -189,31 +219,27 @@ export default function UtenteClient() {
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-cream p-3 text-[13px] font-semibold text-ink">
                     <span className="inline-flex items-center gap-1.5 capitalize">
                       <CalendarDays size={14} className="text-ink-faint" />
-                      {formatDayLong(date)}
+                      {formatDayLong(b.date)}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Clock size={14} className="text-ink-faint" />
                       {b.slot}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 text-ink-mute">
-                      <MapPin size={14} className="text-ink-faint" />
-                      {pro.zona}
-                    </span>
                   </div>
 
                   {/* azioni */}
                   <div className="mt-3 flex gap-2">
-                    {b.status !== 'completed' && (
+                    {canAct && (
                       <>
                         <Link
-                          href={`/pro/${pro.slug}`}
+                          href={`/pro/${b.proSlug}`}
                           className="pressable flex h-10 flex-1 items-center justify-center rounded-xl border border-ink/15 text-[13px] font-bold text-ink hover:bg-ink hover:text-white"
                         >
                           Vedi profilo
                         </Link>
                         <button
                           type="button"
-                          onClick={() => cancelBooking(b.id)}
+                          onClick={() => handleCancel(b.id)}
                           className="pressable flex h-10 flex-1 items-center justify-center rounded-xl border border-line text-[13px] font-bold text-ink-mute hover:border-red-300 hover:text-red-500"
                         >
                           Annulla
@@ -232,7 +258,7 @@ export default function UtenteClient() {
                     )}
                     {b.status === 'completed' && b.reviewed && (
                       <Link
-                        href={`/pro/${pro.slug}`}
+                        href={`/pro/${b.proSlug}`}
                         className="pressable flex h-10 flex-1 items-center justify-center rounded-xl border border-ink/15 text-[13px] font-bold text-ink hover:bg-ink hover:text-white"
                       >
                         Prenota di nuovo
@@ -258,11 +284,18 @@ export default function UtenteClient() {
       {/* sheet recensione */}
       <ReviewSheet
         open={reviewFor !== null}
-        proName={reviewFor ? getPro(reviewFor.proId).name : ''}
+        proName={reviewFor?.proName ?? ''}
         jobLabel={reviewFor?.service ?? ''}
         onClose={() => setReviewFor(null)}
-        onSubmit={() => {
-          if (reviewFor) markReviewed(reviewFor.id);
+        onSubmit={async (rating, text) => {
+          if (!reviewFor || !token) return 'Sessione scaduta, riaccedi.';
+          try {
+            await createReview(token, { bookingId: reviewFor.id, rating, text });
+            setBookings((prev) => prev && prev.map((b) => (b.id === reviewFor.id ? { ...b, reviewed: true } : b)));
+            return null;
+          } catch (e) {
+            return e instanceof Error ? e.message : 'Errore di rete';
+          }
         }}
       />
     </div>
