@@ -159,8 +159,10 @@ export default async function HomePage() {
                   <div className="flex items-center gap-3 text-[13px]">
                     <span className="inline-flex items-center gap-1 font-bold text-ink">
                       <Star size={13} className="fill-ember text-ember" />
-                      {(pro.rating ?? 0).toFixed(1)}
-                      <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
+                      {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
+                      {pro.rating !== null && (
+                        <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
+                      )}
                     </span>
                     <span className="inline-flex items-center gap-1 text-ink-mute">
                       <MapPin size={13} />
