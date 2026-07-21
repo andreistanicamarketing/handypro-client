@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, MapPin, Wrench } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { CATEGORIES, CITIES, PROS } from '@/lib/mock-data';
+import { CATEGORIES, CITIES } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 
 interface SearchBarProps {
@@ -16,7 +16,7 @@ interface SearchBarProps {
 }
 
 interface Suggestion {
-  type: 'categoria' | 'professionista';
+  type: 'categoria';
   label: string;
   sublabel?: string;
   value: string;
@@ -56,18 +56,7 @@ export default function SearchBar({
     sublabel: c.description,
     value: c.slug,
   }));
-  const proSuggestions: Suggestion[] =
-    q.length >= 2
-      ? PROS.filter((p) => p.name.toLowerCase().includes(q))
-          .slice(0, 3)
-          .map((p) => ({
-            type: 'professionista' as const,
-            label: p.name,
-            sublabel: `${p.categoryLabel} · ${p.city}`,
-            value: p.slug,
-          }))
-      : [];
-  const suggestions = [...categorySuggestions.slice(0, 6), ...proSuggestions];
+  const suggestions = categorySuggestions.slice(0, 6);
 
   const loc = location.trim().toLowerCase();
   const citySuggestions = CITIES.filter((c) => !loc || c.toLowerCase().includes(loc)).slice(0, 6);
@@ -84,11 +73,6 @@ export default function SearchBar({
   }
 
   function pickSuggestion(s: Suggestion) {
-    if (s.type === 'professionista') {
-      setOpenPanel(null);
-      router.push(`/pro/${s.value}`);
-      return;
-    }
     setQuery(s.label);
     setSelectedCategory(s.value);
     setOpenPanel('location');

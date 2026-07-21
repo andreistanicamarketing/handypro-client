@@ -3,6 +3,7 @@ import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
+import Providers from './providers';
 
 export const metadata: Metadata = {
   title: 'Handy Pro — Il tuo professionista, a portata di mano',
@@ -32,11 +33,13 @@ export default function RootLayout({
   return (
     <html lang="it">
       <body className="bg-cream text-ink">
-        <Navbar />
-        {/* pb-bottom-nav riserva spazio alla bottom nav su mobile */}
-        <main className="pb-bottom-nav">{children}</main>
-        <Footer />
-        <BottomNav />
+        <Providers>
+          <Navbar />
+          {/* pb-bottom-nav riserva spazio alla bottom nav su mobile */}
+          <main className="pb-bottom-nav">{children}</main>
+          <Footer />
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

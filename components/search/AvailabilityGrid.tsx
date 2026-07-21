@@ -3,19 +3,13 @@
 // Disponibilità: colonne giorno con slot prenotabili.
 // Mobile: scroll orizzontale con snap. Desktop: 4 colonne con frecce.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-  getAvailability,
-  getNextAvailability,
-  formatDayShort,
-  formatDayLong,
-} from '@/lib/mock-data';
-import { cn } from '@/lib/utils';
+import { getAvailability, nextAvailability, type DayAvailability } from '@/lib/data';
+import { cn, formatDayShort, formatDayLong, toDateKey } from '@/lib/utils';
 
 interface AvailabilityGridProps {
-  proId: string;
   proSlug: string;
   visibleDays?: number;
 }
@@ -23,21 +17,35 @@ interface AvailabilityGridProps {
 const COLLAPSED_ROWS = 4;
 
 export default function AvailabilityGrid({
-  proId,
   proSlug,
   visibleDays = 4,
 }: AvailabilityGridProps) {
-  // Parti dalla prima finestra che contiene almeno uno slot
-  const [offset, setOffset] = useState(() => {
-    const days = getAvailability(proId, 14);
-    const firstIdx = days.findIndex((d) => d.slots.length > 0);
-    if (firstIdx <= 0) return 0;
-    const windowStart = Math.floor(firstIdx / visibleDays) * visibleDays;
-    return Math.min(windowStart, Math.max(0, days.length - visibleDays));
-  });
+  const [allDays, setAllDays] = useState<DayAvailability[] | null>(null); // null = loading
+  const [offset, setOffset] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
-  const allDays = useMemo(() => getAvailability(proId, 14), [proId]);
+  useEffect(() => {
+    let alive = true;
+    getAvailability(proSlug, 14)
+      .then((days) => {
+        if (!alive) return;
+        setAllDays(days);
+        const firstIdx = days.findIndex((d) => d.slots.length > 0);
+        if (firstIdx > 0) {
+          const windowStart = Math.floor(firstIdx / visibleDays) * visibleDays;
+          setOffset(Math.min(windowStart, Math.max(0, days.length - visibleDays)));
+        }
+      })
+      .catch(() => alive && setAllDays([]));
+    return () => {
+      alive = false;
+    };
+  }, [proSlug, visibleDays]);
+
+  if (allDays === null) {
+    return <div className="min-h-[110px] animate-pulse rounded-card bg-sand/50" aria-label="Caricamento disponibilità" />;
+  }
+
   const maxOffset = Math.max(0, allDays.length - visibleDays);
   const days = allDays.slice(offset, offset + visibleDays);
 
@@ -46,7 +54,7 @@ export default function AvailabilityGrid({
   const hasMore = maxSlots > COLLAPSED_ROWS;
 
   if (maxSlots === 0) {
-    const next = getNextAvailability(proId);
+    const next = nextAvailability(allDays);
     return (
       <div className="flex min-h-[110px] flex-col items-center justify-center rounded-card bg-sand/60 p-4 text-center">
         <p className="text-[13.5px] font-medium text-ink-mute">
@@ -94,7 +102,7 @@ export default function AvailabilityGrid({
             const slots = day.slots.slice(0, visibleRows);
             return (
               <div
-                key={day.date.toISOString()}
+                key={toDateKey(day.date)}
                 className="w-[76px] shrink-0 snap-start text-center sm:w-auto sm:min-w-0 sm:shrink"
               >
                 <p className="text-[12px] font-bold capitalize text-ink">{dayName}</p>
@@ -103,7 +111,7 @@ export default function AvailabilityGrid({
                   {slots.map((slot) => (
                     <Link
                       key={slot}
-                      href={`/pro/${proSlug}?data=${day.date.toISOString().slice(0, 10)}&ora=${slot}`}
+                      href={`/pro/${proSlug}?data=${toDateKey(day.date)}&ora=${slot}`}
                       className="pressable flex h-9 items-center justify-center rounded-xl bg-sand text-[13px] font-bold text-ink hover:bg-ink hover:text-white"
                     >
                       {slot}

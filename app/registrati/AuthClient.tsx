@@ -10,9 +10,10 @@ import {
   UserRound, Wrench, LogIn, Eye, EyeOff, ArrowRight, ShieldCheck, LogOut,
 } from 'lucide-react';
 import {
-  MOCK_USERS, login, register, logout, areaForRole, useSession,
+  login, register, logout, areaForRole, useSession,
 } from '@/lib/auth-mock';
-import { CATEGORIES } from '@/lib/mock-data';
+import { ApiError } from '@/lib/api';
+import { CATEGORIES } from '@/lib/categories';
 import type { UserRole } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -42,9 +43,9 @@ export default function AuthClient() {
   const [reg, setReg] = useState({ nome: '', cognome: '', email: '', password: '', citta: '', categoria: '' });
   const [regTouched, setRegTouched] = useState(false);
 
-  function handleLogin(e?: React.FormEvent) {
+  async function handleLogin(e?: React.FormEvent) {
     e?.preventDefault();
-    const s = login(email, password);
+    const s = await login(email, password);
     if (!s) {
       setError('Email o password non corretti. Prova con un account demo qui sotto.');
       return;
@@ -52,9 +53,12 @@ export default function AuthClient() {
     router.push(areaForRole(s.role));
   }
 
-  function quickLogin(demoEmail: string) {
-    const user = MOCK_USERS.find((u) => u.email === demoEmail)!;
-    const s = login(user.email, 'demo123')!;
+  async function quickLogin(demoEmail: string) {
+    const s = await login(demoEmail, 'demo123');
+    if (!s) {
+      setError('Login demo non riuscito: il backend è avviato con il seed?');
+      return;
+    }
     router.push(areaForRole(s.role));
   }
 
@@ -64,17 +68,24 @@ export default function AuthClient() {
     reg.password.length >= 6 &&
     (role === 'privato' || reg.categoria !== '');
 
-  function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setRegTouched(true);
     if (!regValid) return;
-    const s = register({
-      name: `${reg.nome.trim()} ${reg.cognome.trim()}`.trim(),
-      email: reg.email.trim(),
-      role,
-      proSlug: role === 'professionista' ? 'mario-rossi-idraulico' : undefined,
-    });
-    router.push(areaForRole(s.role));
+    try {
+      const s = await register({
+        firstName: reg.nome.trim(),
+        lastName: reg.cognome.trim(),
+        email: reg.email.trim(),
+        password: reg.password,
+        role,
+        location: reg.citta.trim() || undefined,
+        category: role === 'professionista' ? reg.categoria : undefined,
+      });
+      if (s) router.push(areaForRole(s.role));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Registrazione non riuscita. Riprova.');
+    }
   }
 
   if (!ready) return null;
@@ -386,6 +397,12 @@ export default function AuthClient() {
               </div>
             )}
 
+            {error && (
+              <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-[13px] font-semibold text-red-500">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
               className="pressable mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ember-gradient text-[15px] font-bold text-white"
@@ -395,7 +412,7 @@ export default function AuthClient() {
 
             <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11.5px] leading-relaxed text-ink-faint">
               <ShieldCheck size={13} className="mt-0.5 shrink-0 text-verde" />
-              Demo: nessun dato viene inviato. Registrandoti accetti i Termini e la Privacy Policy.
+              Registrandoti accetti i Termini e la Privacy Policy.
             </p>
           </form>
         )}

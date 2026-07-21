@@ -5,38 +5,29 @@
 
 import Link from 'next/link';
 import { ShieldCheck, MapPin, Star } from 'lucide-react';
-import type { MockPro } from '@/lib/mock-data';
+import type { Pro } from '@/lib/data';
 import AvailabilityGrid from './AvailabilityGrid';
 import { cn } from '@/lib/utils';
 
 interface ProResultCardProps {
-  pro: MockPro;
+  pro: Pro;
   isHighlighted?: boolean;
   onHover?: (proId: string | null) => void;
 }
 
-const PRICE_LABEL: Record<MockPro['priceRange'], string> = {
+const PRICE_LABEL: Record<Pro['priceRange'], string> = {
   low: '€',
   medium: '€€',
   high: '€€€',
 };
 
-export function ProInitialsAvatar({ pro, size = 56 }: { pro: MockPro; size?: number }) {
-  const initials = pro.name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('');
+export function ProInitialsAvatar({ name, hue, size = 56 }: { name: string; hue: number; size?: number }) {
+  const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('');
   return (
     <div
       aria-hidden
       className="flex shrink-0 items-center justify-center rounded-2xl font-extrabold text-white"
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.32,
-        background: `hsl(${pro.hue} 42% 42%)`,
-      }}
+      style={{ width: size, height: size, fontSize: size * 0.32, background: `hsl(${hue} 42% 42%)` }}
     >
       {initials}
     </div>
@@ -60,7 +51,7 @@ export default function ProResultCard({ pro, isHighlighted, onHover }: ProResult
         <div className="min-w-0 flex-1">
           <div className="flex gap-3">
             <Link href={`/pro/${pro.slug}`} className="pressable shrink-0">
-              <ProInitialsAvatar pro={pro} />
+              <ProInitialsAvatar name={pro.name} hue={pro.hue} />
             </Link>
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
@@ -80,8 +71,10 @@ export default function ProResultCard({ pro, isHighlighted, onHover }: ProResult
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
                 <span className="inline-flex items-center gap-1 font-bold text-ink">
                   <Star size={13} className="fill-ember text-ember" />
-                  {pro.rating.toFixed(1)}
-                  <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
+                  {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
+                  {pro.rating !== null && (
+                    <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
+                  )}
                 </span>
                 {pro.isVerified && (
                   <span className="inline-flex items-center gap-1 font-semibold text-verde">
@@ -126,7 +119,7 @@ export default function ProResultCard({ pro, isHighlighted, onHover }: ProResult
           <p className="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-faint">
             Prossime disponibilità
           </p>
-          <AvailabilityGrid proId={pro.id} proSlug={pro.slug} visibleDays={4} />
+          <AvailabilityGrid proSlug={pro.slug} visibleDays={4} />
         </div>
 
         {/* CTA profilo — solo mobile, a tutta larghezza */}

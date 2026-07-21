@@ -1,9 +1,10 @@
 // Profilo professionista + flusso prenotazione.
-// Server component: risolve il pro dallo slug e passa i dati al client.
+// Server component: risolve il pro dallo slug via API e passa i dati al client.
 
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getProBySlug, getReviewsByProId } from '@/lib/mock-data';
+import { getProBySlug, getReviews } from '@/lib/data';
 import ProProfileClient from './ProProfileClient';
 
 interface ProProfilePageProps {
@@ -14,20 +15,22 @@ interface ProProfilePageProps {
 // Rendering dinamico: il flusso di prenotazione legge ?data e ?ora.
 export const dynamic = 'force-dynamic';
 
-export function generateMetadata({ params }: ProProfilePageProps): Metadata {
-  const pro = getProBySlug(params.slug);
+const loadPro = cache((slug: string) => getProBySlug(slug));
+
+export async function generateMetadata({ params }: ProProfilePageProps): Promise<Metadata> {
+  const pro = await loadPro(params.slug).catch(() => null);
   if (!pro) return { title: 'Professionista non trovato — Handy Pro' };
   return {
     title: `${pro.name} — ${pro.categoryLabel} a ${pro.city} | Handy Pro`,
-    description: `${pro.specialization}. ${pro.reviewCount} recensioni verificate, ${pro.rating.toFixed(1)}/5. Prenota online.`,
+    description: `${pro.specialization}. ${pro.reviewCount} recensioni verificate. Prenota online.`,
   };
 }
 
-export default function ProProfilePage({ params, searchParams }: ProProfilePageProps) {
-  const pro = getProBySlug(params.slug);
+export default async function ProProfilePage({ params, searchParams }: ProProfilePageProps) {
+  const pro = await loadPro(params.slug);
   if (!pro) notFound();
 
-  const reviews = getReviewsByProId(pro.id);
+  const reviews = await getReviews(params.slug).catch(() => []);
 
   return (
     <ProProfileClient

@@ -1,18 +1,19 @@
 'use client';
 
 // Flusso di prenotazione in 3 passi + conferma.
-// Bottom sheet su mobile, dialog centrato su desktop. Tutto mock lato client.
+// Bottom sheet su mobile, dialog centrato su desktop.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   X, ChevronLeft, Check, CalendarDays, Wrench, UserRound, CheckCircle2,
 } from 'lucide-react';
-import type { MockPro } from '@/lib/mock-data';
-import { getAvailability, formatDayLong, formatDayShort } from '@/lib/mock-data';
-import { cn } from '@/lib/utils';
+import { getAvailability, createBooking, type Pro, type Service, type DayAvailability } from '@/lib/data';
+import { useSession } from '@/lib/auth-mock';
+import { cn, formatDayLong, formatDayShort, toDateKey } from '@/lib/utils';
 
 interface BookingSheetProps {
-  pro: MockPro;
+  pro: Pro;
   open: boolean;
   onClose: () => void;
   /** Preselezione da query param (?data=YYYY-MM-DD&ora=HH:MM) */
@@ -22,7 +23,7 @@ interface BookingSheetProps {
 
 type Step = 1 | 2 | 3 | 4;
 
-const STEP_LABELS = ['Servizio', 'Data e ora', 'I tuoi dati'];
+const STEP_LABELS = ['Servizio', 'Data e ora', 'Riepilogo'];
 
 export default function BookingSheet({
   pro,
@@ -31,17 +32,28 @@ export default function BookingSheet({
   initialDate,
   initialSlot,
 }: BookingSheetProps) {
+  const router = useRouter();
+  const { session } = useSession();
   const [step, setStep] = useState<Step>(1);
-  const [service, setService] = useState<string | null>(null);
+  const [service, setService] = useState<Service | null>(null);
   const [dateKey, setDateKey] = useState<string | null>(initialDate ?? null);
   const [slot, setSlot] = useState<string | null>(initialSlot ?? null);
-  const [form, setForm] = useState({ nome: '', telefono: '', note: '' });
-  const [touched, setTouched] = useState(false);
+  const [days, setDays] = useState<DayAvailability[] | null>(null);
+  const [note, setNote] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const days = useMemo(
-    () => getAvailability(pro.id, 14).filter((d) => d.slots.length > 0),
-    [pro.id]
-  );
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    setDays(null);
+    getAvailability(pro.slug, 14)
+      .then((d) => alive && setDays(d.filter((x) => x.slots.length > 0)))
+      .catch(() => alive && setDays([]));
+    return () => {
+      alive = false;
+    };
+  }, [open, pro.slug]);
 
   // Blocca lo scroll del body quando il foglio è aperto
   useEffect(() => {
@@ -58,21 +70,56 @@ export default function BookingSheet({
       setService(null);
       setDateKey(initialDate ?? null);
       setSlot(initialSlot ?? null);
-      setTouched(false);
+      setNote('');
+      setError(null);
+      setSending(false);
     }
   }, [open, initialDate, initialSlot]);
 
   if (!open) return null;
 
-  const selectedDay = days.find((d) => d.date.toISOString().slice(0, 10) === dateKey);
-  const formValid = form.nome.trim().length >= 2 && form.telefono.trim().length >= 6;
+  const selectedDay = days?.find((d) => toDateKey(d.date) === dateKey);
 
-  function next() {
-    if (step === 3) {
-      setTouched(true);
-      if (!formValid) return;
+  async function next() {
+    if (step < 3) {
+      setStep((s) => (s + 1) as Step);
+      return;
     }
-    setStep((s) => Math.min(4, s + 1) as Step);
+    // step 3 → invio
+    if (!session) {
+      onClose();
+      router.push('/registrati');
+      return;
+    }
+    if (session.role !== 'privato') {
+      setError('Gli account professionista non possono prenotare.');
+      return;
+    }
+    if (!service || !dateKey || !slot) return;
+    setSending(true);
+    setError(null);
+    try {
+      await createBooking(session.accessToken, {
+        professionalId: pro.id,
+        serviceItemId: service.id,
+        date: dateKey,
+        slot,
+        note: note.trim() || undefined,
+      });
+      setStep(4);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Errore di rete, riprova.';
+      setError(message);
+      // slot probabilmente occupato: ricarica la disponibilità e torna alla scelta orario
+      const fresh = await getAvailability(pro.slug, 14).catch(() => null);
+      if (fresh) {
+        setDays(fresh.filter((x) => x.slots.length > 0));
+        setSlot(null);
+        setStep(2);
+      }
+    } finally {
+      setSending(false);
+    }
   }
 
   const canProceed =
@@ -157,12 +204,12 @@ export default function BookingSheet({
             <div className="space-y-2.5">
               {pro.services.map((s) => (
                 <button
-                  key={s.name}
+                  key={s.id}
                   type="button"
-                  onClick={() => setService(s.name)}
+                  onClick={() => setService(s)}
                   className={cn(
                     'pressable flex w-full items-center gap-3 rounded-card border p-4 text-left',
-                    service === s.name
+                    service?.id === s.id
                       ? 'border-ember bg-ember-soft/60'
                       : 'border-line bg-white hover:border-ink/25'
                   )}
@@ -170,7 +217,7 @@ export default function BookingSheet({
                   <span
                     className={cn(
                       'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
-                      service === s.name ? 'bg-ember text-white' : 'bg-sand text-ink'
+                      service?.id === s.id ? 'bg-ember text-white' : 'bg-sand text-ink'
                     )}
                   >
                     <Wrench size={17} />
@@ -182,10 +229,10 @@ export default function BookingSheet({
                   <span
                     className={cn(
                       'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2',
-                      service === s.name ? 'border-ember bg-ember text-white' : 'border-line'
+                      service?.id === s.id ? 'border-ember bg-ember text-white' : 'border-line'
                     )}
                   >
-                    {service === s.name && <Check size={13} strokeWidth={3} />}
+                    {service?.id === s.id && <Check size={13} strokeWidth={3} />}
                   </span>
                 </button>
               ))}
@@ -200,37 +247,54 @@ export default function BookingSheet({
                 <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-faint">
                   Scegli il giorno
                 </p>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
-                  {days.map((d) => {
-                    const key = d.date.toISOString().slice(0, 10);
-                    const { dayName, dayNum } = formatDayShort(d.date);
-                    const active = key === dateKey;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          setDateKey(key);
-                          setSlot(null);
-                        }}
-                        className={cn(
-                          'pressable w-[64px] shrink-0 rounded-card border py-2.5 text-center md:w-auto',
-                          active ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink'
-                        )}
-                      >
-                        <span className="block text-[12px] font-bold capitalize">{dayName}</span>
-                        <span className={cn('block text-[11px]', active ? 'text-white/70' : 'text-ink-faint')}>
-                          {dayNum}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {days === null ? (
+                  <div className="flex gap-2 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[62px] w-[64px] shrink-0 animate-pulse rounded-card bg-sand/50 md:w-auto"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
+                    {days.map((d) => {
+                      const key = toDateKey(d.date);
+                      const { dayName, dayNum } = formatDayShort(d.date);
+                      const active = key === dateKey;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            setDateKey(key);
+                            setSlot(null);
+                          }}
+                          className={cn(
+                            'pressable w-[64px] shrink-0 rounded-card border py-2.5 text-center md:w-auto',
+                            active ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink'
+                          )}
+                        >
+                          <span className="block text-[12px] font-bold capitalize">{dayName}</span>
+                          <span className={cn('block text-[11px]', active ? 'text-white/70' : 'text-ink-faint')}>
+                            {dayNum}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* colonna destra: orari */}
               <div className="mt-4 md:mt-0">
-                {selectedDay ? (
+                {days === null ? (
+                  <div className="grid grid-cols-4 gap-2 md:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="h-10 animate-pulse rounded-xl bg-sand/50" />
+                    ))}
+                  </div>
+                ) : selectedDay ? (
                   <>
                     <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-faint">
                       Orari per {formatDayLong(selectedDay.date).toLowerCase()}
@@ -262,54 +326,19 @@ export default function BookingSheet({
             </div>
           )}
 
-          {/* ── Step 3: dati ── */}
+          {/* ── Step 3: riepilogo ── */}
           {step === 3 && (
             <div className="md:grid md:grid-cols-[1.2fr_1fr] md:gap-6">
-              {/* Colonna sinistra: campi */}
+              {/* Colonna sinistra: nota */}
               <div className="space-y-3.5">
-                <div>
-                  <label htmlFor="bk-nome" className="mb-1 block text-[13px] font-bold text-ink">
-                    Nome e cognome
-                  </label>
-                  <input
-                    id="bk-nome"
-                    type="text"
-                    value={form.nome}
-                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                    placeholder="Mario Bianchi"
-                    autoComplete="name"
-                    className={cn(
-                      'h-12 w-full rounded-xl border bg-white px-3.5 text-[15px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember',
-                      touched && form.nome.trim().length < 2 ? 'border-red-400' : 'border-line'
-                    )}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="bk-tel" className="mb-1 block text-[13px] font-bold text-ink">
-                    Telefono
-                  </label>
-                  <input
-                    id="bk-tel"
-                    type="tel"
-                    inputMode="tel"
-                    value={form.telefono}
-                    onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                    placeholder="+39 333 123 4567"
-                    autoComplete="tel"
-                    className={cn(
-                      'h-12 w-full rounded-xl border bg-white px-3.5 text-[15px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember',
-                      touched && form.telefono.trim().length < 6 ? 'border-red-400' : 'border-line'
-                    )}
-                  />
-                </div>
                 <div>
                   <label htmlFor="bk-note" className="mb-1 block text-[13px] font-bold text-ink">
                     Descrivi il problema <span className="font-medium text-ink-faint">(facoltativo)</span>
                   </label>
                   <textarea
                     id="bk-note"
-                    value={form.note}
-                    onChange={(e) => setForm({ ...form, note: e.target.value })}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
                     placeholder="Es. la caldaia perde acqua dal tubo di scarico…"
                     rows={3}
                     className="w-full resize-none rounded-xl border border-line bg-white p-3.5 text-[15px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember"
@@ -329,7 +358,7 @@ export default function BookingSheet({
                     </span>
                     <span>
                       <p className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Servizio</p>
-                      <p className="text-[13.5px] font-semibold text-ink">{service}</p>
+                      <p className="text-[13.5px] font-semibold text-ink">{service?.name}</p>
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
@@ -369,7 +398,7 @@ export default function BookingSheet({
               </h3>
               <p className="mx-auto mb-5 max-w-[280px] text-[14px] leading-relaxed text-ink-mute">
                 {pro.name} riceverà la tua richiesta per{' '}
-                <strong className="text-ink">{service}</strong>{' '}
+                <strong className="text-ink">{service?.name}</strong>{' '}
                 {selectedDay ? formatDayLong(selectedDay.date).toLowerCase() : ''} alle{' '}
                 <strong className="text-ink">{slot}</strong> e ti confermerà al più presto.
               </p>
@@ -393,13 +422,18 @@ export default function BookingSheet({
             className="shrink-0 border-t border-line bg-white px-5 pt-3"
             style={{ paddingBottom: 'calc(12px + var(--safe-bottom))' }}
           >
+            {error && (
+              <p role="alert" className="mb-2 rounded-xl bg-red-50 p-3 text-[13px] font-semibold text-red-500">
+                {error}
+              </p>
+            )}
             <button
               type="button"
               onClick={next}
-              disabled={!canProceed}
+              disabled={!canProceed || sending}
               className="pressable h-12 w-full rounded-2xl bg-ember-gradient text-[15px] font-bold text-white disabled:opacity-40"
             >
-              {step === 3 ? 'Invia richiesta' : 'Continua'}
+              {sending ? 'Invio…' : step === 3 ? (session ? 'Invia richiesta' : 'Accedi per prenotare') : 'Continua'}
             </button>
           </div>
         )}

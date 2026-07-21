@@ -1,7 +1,8 @@
 'use client';
 
-// Dashboard professionista mobile-first (pro mock loggato: Mario Rossi).
+// Dashboard professionista mobile-first (dati reali dal backend).
 // Richieste con accetta/rifiuta, agenda raggruppata per giorno,
+// completa lavoro per sbloccare la recensione del cliente,
 // statistiche di visibilità e upsell Vetrina.
 
 import { useEffect, useMemo, useState } from 'react';
@@ -9,24 +10,33 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, areaForRole } from '@/lib/auth-mock';
 import {
-  Inbox, CalendarDays, Clock, MapPin, Star, Eye, TrendingUp, Search,
+  Inbox, CalendarDays, Clock, Star, Eye, TrendingUp, Search,
   Check, X, Sparkles, ChevronRight, BadgeCheck,
 } from 'lucide-react';
 import {
-  PRO_REQUESTS, PRO_STATS, getRequestDate, getProBySlug, getReviewsByProId,
-  formatDayLong, type MockProRequest,
-} from '@/lib/mock-data';
-import { cn } from '@/lib/utils';
+  getProBookings, confirmBooking, completeBooking, cancelBooking,
+  getProBySlug, getReviews, type ProRequest, type Pro, type Review,
+} from '@/lib/data';
+import { cn, formatDayLong, timeAgo, toDateKey } from '@/lib/utils';
 
 type Tab = 'richieste' | 'agenda';
 
-const LOGGED_PRO_SLUG = 'mario-rossi-idraulico';
+/** Statistiche settimanali — dati demo: il backend non le espone ancora (Fase 3). */
+const PRO_STATS = { profileViews: 86, viewsTrend: '+24%', searchAppearances: 312 };
 
 export default function ProDashboardClient() {
   const router = useRouter();
   const { session, ready } = useSession();
-  const pro = getProBySlug(LOGGED_PRO_SLUG)!;
-  const reviews = getReviewsByProId(pro.id).slice(0, 2);
+
+  const token = session?.accessToken;
+  const proSlug = session?.proSlug;
+
+  const [pro, setPro] = useState<Pro | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [requests, setRequests] = useState<ProRequest[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [justAccepted, setJustAccepted] = useState<string | null>(null);
 
   // Guard: solo professionisti loggati
   useEffect(() => {
@@ -35,24 +45,47 @@ export default function ProDashboardClient() {
     else if (session.role !== 'professionista') router.replace(areaForRole(session.role));
   }, [ready, session, router]);
 
-  const [tab, setTab] = useState<Tab>('richieste');
-  const [requests, setRequests] = useState<MockProRequest[]>(PRO_REQUESTS);
-  const [justAccepted, setJustAccepted] = useState<string | null>(null);
+  useEffect(() => {
+    if (!token || !proSlug || session?.role !== 'professionista') return;
+    let alive = true;
+    setError(null);
+    Promise.all([
+      getProBookings(token),
+      getProBySlug(proSlug),
+      getReviews(proSlug).catch(() => []),
+    ])
+      .then(([reqs, proData, revs]) => {
+        if (!alive) return;
+        setRequests(reqs);
+        setPro(proData);
+        setReviews(revs.slice(0, 2));
+      })
+      .catch((e) => alive && setError(e instanceof Error ? e.message : 'Errore di rete'));
+    return () => {
+      alive = false;
+    };
+  }, [token, proSlug, session?.role, reloadKey]);
 
+  const [tab, setTab] = useState<Tab>('richieste');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const pending = useMemo(
-    () => requests.filter((r) => r.status === 'pending').sort((a, b) => a.dayOffset - b.dayOffset),
+    () => (requests ?? []).filter((r) => r.status === 'pending')
+      .sort((a, b) => a.date.getTime() - b.date.getTime()),
     [requests]
   );
   const accepted = useMemo(
-    () => requests.filter((r) => r.status === 'accepted').sort((a, b) => a.dayOffset - b.dayOffset),
+    () => (requests ?? []).filter((r) => r.status === 'confirmed')
+      .sort((a, b) => a.date.getTime() - b.date.getTime()),
     [requests]
   );
 
   // Agenda raggruppata per giorno
   const agendaDays = useMemo(() => {
-    const map = new Map<string, MockProRequest[]>();
+    const map = new Map<string, ProRequest[]>();
     for (const r of accepted) {
-      const key = getRequestDate(r).toISOString().slice(0, 10);
+      const key = toDateKey(r.date);
       map.set(key, [...(map.get(key) ?? []), r]);
     }
     return [...map.entries()]
@@ -63,17 +96,29 @@ export default function ProDashboardClient() {
       }));
   }, [accepted]);
 
+  async function act(
+    id: string,
+    fn: (t: string, i: string) => Promise<void>,
+    after: (r: ProRequest) => ProRequest | null
+  ) {
+    if (!token) return;
+    try {
+      await fn(token, id);
+      setRequests((prev) => prev && prev
+        .map((r) => (r.id === id ? after(r) : r))
+        .filter((r): r is ProRequest => r !== null));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Errore di rete');
+    }
+  }
+
   function accept(id: string) {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: 'accepted' as const } : r))
-    );
+    void act(id, confirmBooking, (r) => ({ ...r, status: 'confirmed' as const }));
     setJustAccepted(id);
     setTimeout(() => setJustAccepted(null), 2200);
   }
-
-  function decline(id: string) {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
-  }
+  const decline = (id: string) => act(id, cancelBooking, () => null);
+  const complete = (id: string) => act(id, completeBooking, () => null);
 
   if (!ready || !session || session.role !== 'professionista') return null;
 
@@ -83,13 +128,15 @@ export default function ProDashboardClient() {
         {/* header */}
         <div className="mb-5 flex items-end justify-between">
           <div>
-            <p className="text-[13px] font-semibold text-ink-faint">Ciao {pro.name.split(' ')[0]} 👋</p>
+            <p className="text-[13px] font-semibold text-ink-faint">
+              Ciao {(pro?.name ?? session.name).split(' ')[0]} 👋
+            </p>
             <h1 className="text-[24px] font-extrabold tracking-tight text-ink md:text-3xl">
               La mia <em className="font-accent text-ember-deep">attività</em>
             </h1>
           </div>
           <Link
-            href={`/pro/${pro.slug}`}
+            href={`/pro/${proSlug}`}
             className="pressable inline-flex h-10 items-center gap-1 rounded-pill border border-line bg-white px-3.5 text-[13px] font-bold text-ink shadow-chip hover:border-ink/30"
           >
             Profilo pubblico
@@ -108,6 +155,7 @@ export default function ProDashboardClient() {
               <TrendingUp size={11} />
               {PRO_STATS.viewsTrend} sett.
             </p>
+            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">dati demo</p>
           </div>
           <div className="rounded-card border border-line bg-white p-3.5 shadow-chip">
             <p className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">
@@ -115,16 +163,17 @@ export default function ProDashboardClient() {
             </p>
             <p className="mt-1 text-[20px] font-extrabold text-ink">{PRO_STATS.searchAppearances}</p>
             <p className="text-[11.5px] font-medium text-ink-faint">apparizioni</p>
+            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">dati demo</p>
           </div>
           <div className="rounded-card border border-line bg-white p-3.5 shadow-chip">
             <p className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">
               <Star size={12} /> Rating
             </p>
             <p className="mt-1 flex items-center gap-1 text-[20px] font-extrabold text-ink">
-              {pro.rating.toFixed(1)}
+              {pro?.rating == null ? '—' : pro.rating.toFixed(1)}
               <Star size={14} className="fill-ember text-ember" />
             </p>
-            <p className="text-[11.5px] font-medium text-ink-faint">{pro.reviewCount} recensioni</p>
+            <p className="text-[11.5px] font-medium text-ink-faint">{pro?.reviewCount ?? 0} recensioni</p>
           </div>
         </div>
 
@@ -183,128 +232,154 @@ export default function ProDashboardClient() {
           ))}
         </div>
 
-        {/* ── Tab richieste ── */}
-        {tab === 'richieste' &&
-          (pending.length === 0 ? (
-            <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
-              <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sand text-ink-mute">
-                <Inbox size={24} />
-              </span>
-              <p className="mb-1 font-bold text-ink">Nessuna richiesta in attesa</p>
-              <p className="mx-auto max-w-[280px] text-[14px] text-ink-mute">
-                Le nuove richieste dei clienti arrivano qui. Rispondere in fretta migliora la tua
-                visibilità.
-              </p>
-            </div>
-          ) : (
-            <ul className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
-              {pending.map((r) => {
-                const date = getRequestDate(r);
-                return (
-                  <li
-                    key={r.id}
-                    className="rounded-card border border-line bg-white p-4 shadow-chip animate-fade-up md:p-5"
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="text-[15px] font-bold text-ink">{r.clientName}</p>
-                      <span className="rounded-pill bg-ember-soft px-2.5 py-1 text-[11px] font-bold text-ember-deep">
-                        Nuova richiesta
-                      </span>
-                    </div>
-                    <p className="text-[13.5px] font-semibold text-ink">{r.service}</p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px] font-medium text-ink-mute">
-                      <span className="inline-flex items-center gap-1 capitalize">
-                        <CalendarDays size={13} className="text-ink-faint" />
-                        {formatDayLong(date)}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Clock size={13} className="text-ink-faint" />
-                        {r.slot}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin size={13} className="text-ink-faint" />
-                        {r.zona}
-                      </span>
-                    </div>
-                    {r.note && (
-                      <p className="mt-2.5 rounded-card bg-cream p-3 text-[13px] leading-relaxed text-ink-mute">
-                        &ldquo;{r.note}&rdquo;
-                      </p>
-                    )}
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => accept(r.id)}
-                        className="pressable flex h-10 flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-ember-gradient text-[13.5px] font-bold text-white"
-                      >
-                        <Check size={15} strokeWidth={3} />
-                        Accetta
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => decline(r.id)}
-                        className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-[13.5px] font-bold text-ink-mute hover:border-red-300 hover:text-red-500"
-                      >
-                        <X size={15} />
-                        Rifiuta
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ))}
-
-        {/* ── Tab agenda ── */}
-        {tab === 'agenda' && (
-          <div className="space-y-5">
-            {agendaDays.length === 0 ? (
-              <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
-                <p className="font-bold text-ink">Agenda vuota</p>
-                <p className="text-[14px] text-ink-mute">
-                  Gli appuntamenti accettati compaiono qui.
-                </p>
-              </div>
-            ) : (
-              agendaDays.map(({ date, items }) => (
-                <div key={date.toISOString()}>
-                  <p className="mb-2 text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink-faint">
-                    <span className="capitalize">{formatDayLong(date)}</span> ·{' '}
-                    {items.length} {items.length === 1 ? 'appuntamento' : 'appuntamenti'}
-                  </p>
-                  <ul className="space-y-2">
-                    {items.map((r) => (
-                      <li
-                        key={r.id}
-                        className={cn(
-                          'flex items-center gap-3.5 rounded-card border bg-white p-3.5 shadow-chip transition-colors',
-                          justAccepted === r.id ? 'border-verde' : 'border-line'
-                        )}
-                      >
-                        <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-ink text-white">
-                          <span className="text-[14px] font-extrabold leading-none">{r.slot}</span>
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14.5px] font-bold text-ink">
-                            {r.service}
-                          </span>
-                          <span className="block truncate text-[12.5px] text-ink-mute">
-                            {r.clientName} · {r.zona}
-                          </span>
-                        </span>
-                        {justAccepted === r.id && (
-                          <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-bold text-verde">
-                            <BadgeCheck size={14} />
-                            Accettato
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
-            )}
+        {/* stato caricamento / errore */}
+        {error ? (
+          <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+            <p className="mb-1 font-bold text-ink">Impossibile caricare le richieste</p>
+            <p className="mb-4 text-[14px] text-ink-mute">{error}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="pressable h-11 rounded-2xl bg-ink px-5 text-[14px] font-bold text-white"
+            >
+              Riprova
+            </button>
           </div>
+        ) : requests === null ? (
+          <div className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-[190px] animate-pulse rounded-card border border-line bg-white/70 shadow-chip" />
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* ── Tab richieste ── */}
+            {tab === 'richieste' &&
+              (pending.length === 0 ? (
+                <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+                  <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sand text-ink-mute">
+                    <Inbox size={24} />
+                  </span>
+                  <p className="mb-1 font-bold text-ink">Nessuna richiesta in attesa</p>
+                  <p className="mx-auto max-w-[280px] text-[14px] text-ink-mute">
+                    Le nuove richieste dei clienti arrivano qui. Rispondere in fretta migliora la tua
+                    visibilità.
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+                  {pending.map((r) => (
+                    <li
+                      key={r.id}
+                      className="rounded-card border border-line bg-white p-4 shadow-chip animate-fade-up md:p-5"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-[15px] font-bold text-ink">{r.clientName}</p>
+                        <span className="rounded-pill bg-ember-soft px-2.5 py-1 text-[11px] font-bold text-ember-deep">
+                          Nuova richiesta
+                        </span>
+                      </div>
+                      <p className="text-[13.5px] font-semibold text-ink">{r.service}</p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px] font-medium text-ink-mute">
+                        <span className="inline-flex items-center gap-1 capitalize">
+                          <CalendarDays size={13} className="text-ink-faint" />
+                          {formatDayLong(r.date)}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock size={13} className="text-ink-faint" />
+                          {r.slot}
+                        </span>
+                      </div>
+                      {r.note && (
+                        <p className="mt-2.5 rounded-card bg-cream p-3 text-[13px] leading-relaxed text-ink-mute">
+                          &ldquo;{r.note}&rdquo;
+                        </p>
+                      )}
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => accept(r.id)}
+                          className="pressable flex h-10 flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-ember-gradient text-[13.5px] font-bold text-white"
+                        >
+                          <Check size={15} strokeWidth={3} />
+                          Accetta
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => decline(r.id)}
+                          className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-[13.5px] font-bold text-ink-mute hover:border-red-300 hover:text-red-500"
+                        >
+                          <X size={15} />
+                          Rifiuta
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+
+            {/* ── Tab agenda ── */}
+            {tab === 'agenda' && (
+              <div className="space-y-5">
+                {agendaDays.length === 0 ? (
+                  <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+                    <p className="font-bold text-ink">Agenda vuota</p>
+                    <p className="text-[14px] text-ink-mute">
+                      Gli appuntamenti accettati compaiono qui.
+                    </p>
+                  </div>
+                ) : (
+                  agendaDays.map(({ date, items }) => (
+                    <div key={date.toISOString()}>
+                      <p className="mb-2 text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink-faint">
+                        <span className="capitalize">{formatDayLong(date)}</span> ·{' '}
+                        {items.length} {items.length === 1 ? 'appuntamento' : 'appuntamenti'}
+                      </p>
+                      <ul className="space-y-2">
+                        {items.map((r) => (
+                          <li
+                            key={r.id}
+                            className={cn(
+                              'flex items-center gap-3.5 rounded-card border bg-white p-3.5 shadow-chip transition-colors',
+                              justAccepted === r.id ? 'border-verde' : 'border-line'
+                            )}
+                          >
+                            <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-ink text-white">
+                              <span className="text-[14px] font-extrabold leading-none">{r.slot}</span>
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14.5px] font-bold text-ink">
+                                {r.service}
+                              </span>
+                              <span className="block truncate text-[12.5px] text-ink-mute">
+                                {r.clientName}
+                              </span>
+                            </span>
+                            {justAccepted === r.id && (
+                              <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-bold text-verde">
+                                <BadgeCheck size={14} />
+                                Accettato
+                              </span>
+                            )}
+                            {r.date.getTime() <= today.getTime() && (
+                              <button
+                                type="button"
+                                onClick={() => complete(r.id)}
+                                className="pressable inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-verde px-3 text-[12.5px] font-bold text-white"
+                              >
+                                <Check size={14} strokeWidth={3} />
+                                Segna completata
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* recensioni recenti */}
@@ -314,34 +389,38 @@ export default function ProDashboardClient() {
               Ultime <em className="font-accent text-ember-deep">recensioni</em>
             </h2>
             <Link
-              href={`/pro/${pro.slug}`}
+              href={`/pro/${proSlug}`}
               className="text-[13px] font-bold text-ink-mute hover:text-ink"
             >
               Vedi tutte
             </Link>
           </div>
-          <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
-            {reviews.map((rv) => (
-              <li key={rv.id} className="rounded-card border border-line bg-white p-4 shadow-chip">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-[13.5px] font-bold text-ink">{rv.reviewerName}</p>
-                  <span className="flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={11}
-                        className={cn(i < rv.rating ? 'fill-ember text-ember' : 'fill-sand text-sand')}
-                      />
-                    ))}
-                  </span>
-                </div>
-                <p className="mb-1 text-[11.5px] font-semibold text-verde">
-                  ✓ {rv.jobLabel} · lavoro confermato
-                </p>
-                <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-mute">{rv.text}</p>
-              </li>
-            ))}
-          </ul>
+          {reviews.length === 0 ? (
+            <p className="text-[13.5px] text-ink-mute">Ancora nessuna recensione.</p>
+          ) : (
+            <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+              {reviews.map((rv) => (
+                <li key={rv.id} className="rounded-card border border-line bg-white p-4 shadow-chip">
+                  <div className="mb-1 flex items-center justify-between">
+                    <p className="text-[13.5px] font-bold text-ink">{rv.reviewerName}</p>
+                    <span className="flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          size={11}
+                          className={cn(i < rv.rating ? 'fill-ember text-ember' : 'fill-sand text-sand')}
+                        />
+                      ))}
+                    </span>
+                  </div>
+                  <p className="mb-1 text-[11.5px] font-semibold text-verde">
+                    ✓ lavoro confermato · {timeAgo(rv.createdAt)}
+                  </p>
+                  <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-mute">{rv.text}</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </div>

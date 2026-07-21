@@ -7,21 +7,21 @@ import Link from 'next/link';
 import {
   ShieldCheck, MapPin, Star, ChevronLeft, BadgeCheck, CalendarDays, Award,
 } from 'lucide-react';
-import type { MockPro, MockReview } from '@/lib/mock-data';
+import type { Pro, Review } from '@/lib/data';
 import AvailabilityGrid from '@/components/search/AvailabilityGrid';
 import BookingSheet from '@/components/booking/BookingSheet';
 import MapView from '@/components/map/MapView';
 import { ProInitialsAvatar } from '@/components/search/ProResultCard';
-import { cn } from '@/lib/utils';
+import { cn, timeAgo } from '@/lib/utils';
 
 interface ProProfileClientProps {
-  pro: MockPro;
-  reviews: MockReview[];
+  pro: Pro;
+  reviews: Review[];
   initialDate?: string;
   initialSlot?: string;
 }
 
-const PRICE_LABEL: Record<MockPro['priceRange'], string> = {
+const PRICE_LABEL: Record<Pro['priceRange'], string> = {
   low: '€ · Economico',
   medium: '€€ · Nella media',
   high: '€€€ · Premium',
@@ -54,7 +54,7 @@ export default function ProProfileClient({
             {/* Header */}
             <section className="rounded-card border border-line bg-white p-5 shadow-chip md:p-6">
               <div className="flex gap-4">
-                <ProInitialsAvatar pro={pro} size={72} />
+                <ProInitialsAvatar name={pro.name} hue={pro.hue} size={72} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
@@ -82,10 +82,10 @@ export default function ProProfileClient({
                 <div className="rounded-card bg-cream p-3 text-center">
                   <p className="flex items-center justify-center gap-1 text-[17px] font-extrabold text-ink">
                     <Star size={15} className="fill-ember text-ember" />
-                    {pro.rating.toFixed(1)}
+                    {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
                   </p>
                   <p className="text-[11.5px] font-medium text-ink-faint">
-                    {pro.reviewCount} recensioni
+                    {pro.rating === null ? 'Nessuna recensione' : `${pro.reviewCount} recensioni`}
                   </p>
                 </div>
                 <div className="rounded-card bg-cream p-3 text-center">
@@ -144,7 +144,7 @@ export default function ProProfileClient({
                 </h2>
                 <span className="inline-flex items-center gap-1 text-[14px] font-extrabold text-ink">
                   <Star size={14} className="fill-ember text-ember" />
-                  {pro.rating.toFixed(1)}
+                  {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
                   <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
                 </span>
               </div>
@@ -177,9 +177,7 @@ export default function ProProfileClient({
                         </span>
                       </div>
                       <p className="mb-1.5 text-[12px] font-semibold text-ink-faint">
-                        {r.jobLabel} ·{' '}
-                        {r.monthsAgo === 1 ? 'un mese fa' : `${r.monthsAgo} mesi fa`} ·{' '}
-                        <span className="text-verde">✓ lavoro confermato</span>
+                        {timeAgo(r.createdAt)} · <span className="text-verde">✓ lavoro confermato</span>
                       </p>
                       <p className="text-[14px] leading-relaxed text-ink-mute">{r.text}</p>
                     </li>
@@ -189,24 +187,26 @@ export default function ProProfileClient({
             </section>
 
             {/* Zona operativa */}
-            <section className="mt-4 overflow-hidden rounded-card border border-line bg-white shadow-chip">
-              <div className="p-5 pb-3 md:p-6 md:pb-3">
-                <h2 className="text-[17px] font-extrabold tracking-tight text-ink">
-                  Zona operativa
-                </h2>
-                <p className="text-[13.5px] text-ink-mute">
-                  {pro.city} e dintorni · base in {pro.zona}
-                </p>
-              </div>
-              <div className="h-[200px] md:h-[260px]">
-                <MapView
-                  markers={[{ id: pro.id, lat: pro.lat, lon: pro.lon, label: pro.name, sublabel: pro.zona }]}
-                  center={[pro.lat, pro.lon]}
-                  zoom={13}
-                  height="100%"
-                />
-              </div>
-            </section>
+            {pro.lat !== null && pro.lon !== null && (
+              <section className="mt-4 overflow-hidden rounded-card border border-line bg-white shadow-chip">
+                <div className="p-5 pb-3 md:p-6 md:pb-3">
+                  <h2 className="text-[17px] font-extrabold tracking-tight text-ink">
+                    Zona operativa
+                  </h2>
+                  <p className="text-[13.5px] text-ink-mute">
+                    {pro.city} e dintorni · base in {pro.zona}
+                  </p>
+                </div>
+                <div className="h-[200px] md:h-[260px]">
+                  <MapView
+                    markers={[{ id: pro.id, lat: pro.lat, lon: pro.lon, label: pro.name, sublabel: pro.zona }]}
+                    center={[pro.lat, pro.lon]}
+                    zoom={13}
+                    height="100%"
+                  />
+                </div>
+              </section>
+            )}
           </div>
 
           {/* ── Colonna disponibilità (sticky su desktop) ── */}
@@ -219,7 +219,7 @@ export default function ProProfileClient({
               <p className="mb-3 text-[12.5px] text-ink-mute">
                 Tocca un orario per prenotare subito.
               </p>
-              <AvailabilityGrid proId={pro.id} proSlug={pro.slug} visibleDays={4} />
+              <AvailabilityGrid proSlug={pro.slug} visibleDays={4} />
               <button
                 type="button"
                 onClick={() => setBookingOpen(true)}
