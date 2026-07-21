@@ -1,6 +1,6 @@
 // ────────────────────────────────────────────────────────────────
 // Data layer reale: chiama il backend (lib/api.ts) e mappa i DTO
-// nelle forme usate dalla UI. Sostituisce lib/mock-data.ts.
+// nelle forme usate dalla UI (sostituisce il vecchio layer mock).
 // ────────────────────────────────────────────────────────────────
 
 import { ApiError, apiFetch, apiFetchAuth } from '@/lib/api';

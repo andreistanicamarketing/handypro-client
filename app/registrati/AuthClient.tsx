@@ -13,7 +13,7 @@ import {
   login, register, logout, areaForRole, useSession,
 } from '@/lib/auth-mock';
 import { ApiError } from '@/lib/api';
-import { CATEGORIES } from '@/lib/mock-data';
+import { CATEGORIES } from '@/lib/categories';
 import type { UserRole } from '@/types';
 import { cn } from '@/lib/utils';
 

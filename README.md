@@ -2,7 +2,7 @@
 
 Marketplace che connette privati con professionisti artigianali (idraulici, elettricisti, falegnami, ecc.) nella propria zona. Questo repository contiene il frontend della web app.
 
-> **Stato attuale:** prototipo funzionale con dati mock. Il backend .NET è sviluppato separatamente; l'integrazione avverrà sostituendo `lib/mock-data.ts` con chiamate API reali e `lib/auth-mock.ts` con NextAuth.
+> **Stato attuale (fase 2):** frontend collegato al backend .NET reale. Ricerca, profili, prenotazioni, recensioni e dashboard chiamano le API via `lib/data.ts`; l'autenticazione usa NextAuth (`lib/auth.ts`) con JWT emesso dal backend. **Il backend deve essere in esecuzione su `http://localhost:5000`** (vedi [`docs/setup-dev.md`](../../docs/setup-dev.md) nella root del repo) — senza backend acceso le pagine mostrano gli stati di errore con "Riprova".
 
 ---
 
@@ -15,8 +15,8 @@ Marketplace che connette privati con professionisti artigianali (idraulici, elet
 | Stile | Tailwind CSS v3 — design system "Bottega" |
 | Mappa | Leaflet + react-leaflet (dynamic import, no SSR) |
 | Icone | lucide-react |
-| Auth | Mock localStorage (→ NextAuth pronto in `lib/auth.ts`) |
-| Dati | Mock in `lib/mock-data.ts` |
+| Auth | NextAuth (`lib/auth.ts`), JWT dal backend .NET |
+| Dati | API reali via `lib/data.ts` (`lib/api.ts` per il fetch autenticato) |
 
 ---
 
@@ -26,6 +26,7 @@ Marketplace che connette privati con professionisti artigianali (idraulici, elet
 
 - Node.js ≥ 18
 - npm ≥ 9
+- **Backend .NET in esecuzione su `http://localhost:5000`** (in modalità Development, così il seeder crea gli account demo — vedi [`docs/setup-dev.md`](../../docs/setup-dev.md))
 
 ### Installazione
 
@@ -64,20 +65,22 @@ NEXTAUTH_SECRET=una-stringa-segreta-qualsiasi
 NEXT_PUBLIC_API_URL=http://localhost:5000   # URL del backend .NET
 ```
 
-> In questa fase mock `NEXT_PUBLIC_API_URL` non viene ancora usato.
+> `NEXT_PUBLIC_API_URL` deve puntare al backend .NET in esecuzione: senza backend acceso ricerca, profili, prenotazioni e recensioni mostrano gli stati di errore con "Riprova".
 
 ---
 
-## Utenze di test
+## Account demo
 
-La pagina `/registrati` mostra due card di accesso rapido. Non servono password da digitare: basta cliccare la card.
+Creati dal seeder del backend al primo avvio in modalità Development (idempotente).
 
-| Ruolo | Email | Password |
-|---|---|---|
-| Cliente | `cliente@demo.it` | `demo123` |
-| Professionista | `pro@demo.it` | `demo123` |
+| Ruolo | Email | Password | Note |
+|---|---|---|---|
+| Cliente | `cliente@demo.it` | `demo123` | Andrei Stanica |
+| Professionista | `pro@demo.it` | `demo123` | Mario Rossi → profilo `mario-rossi-idraulico` |
 
-La sessione viene salvata in `localStorage` e persiste tra i refresh. Per uscire: pulsante logout in navbar.
+Più 11 altri pro (`{slug}@demo.it`) e 12 recensori (`nome.cognome@demo.it`), tutti con password `demo123`.
+
+La sessione è gestita da NextAuth (JWT) e persiste tra i refresh. Per uscire: pulsante logout in navbar.
 
 ---
 
@@ -109,9 +112,11 @@ app/frontend/
 │       └── MapView.tsx         # Mappa Leaflet (SSR-safe)
 │
 ├── lib/
-│   ├── mock-data.ts            # Dati mock: pro, recensioni, prenotazioni, slot
-│   ├── auth-mock.ts            # Sessione mock (localStorage)
-│   ├── auth.ts                 # Configurazione NextAuth (per integrazione backend)
+│   ├── data.ts                 # Data layer reale: chiama il backend e mappa i DTO per la UI
+│   ├── api.ts                  # fetch autenticato verso il backend .NET
+│   ├── auth-mock.ts            # Adapter di sessione (stessa interfaccia di prima, ora su NextAuth)
+│   ├── auth.ts                 # Configurazione NextAuth (CredentialsProvider verso il backend)
+│   ├── categories.ts           # Categorie/città statiche condivise dalla UI
 │   └── utils.ts                # cn() helper
 │
 └── types/
@@ -154,8 +159,6 @@ Configurato in `tailwind.config.ts` e `app/globals.css`.
 
 ## Prossimi step
 
-- [ ] Collegare le API del backend .NET (sostituire `lib/mock-data.ts`)
-- [ ] Attivare NextAuth con provider reale (configurazione base già in `lib/auth.ts`)
 - [ ] Implementare la pagina "Come funziona" (rimossa dalla nav, da decidere se tenerla)
 - [ ] Upload foto profilo professionista
 - [ ] Chat diretta cliente ↔ professionista
