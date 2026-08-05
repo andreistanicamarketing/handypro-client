@@ -76,7 +76,11 @@ export default function ChatSheet({
       try {
         const fresh = await getMessages(token, bookingId, lastCreatedAt.current);
         if (!alive || fresh.length === 0) return;
-        setMessages((prev) => [...(prev ?? []), ...fresh]);
+        setMessages((prev) => {
+          const existingIds = new Set((prev ?? []).map((m) => m.id));
+          const deduped = fresh.filter((m) => !existingIds.has(m.id));
+          return deduped.length > 0 ? [...(prev ?? []), ...deduped] : (prev ?? []);
+        });
         lastCreatedAt.current = fresh[fresh.length - 1].createdAt;
         if (fresh.some((m) => m.senderId !== myUserId)) {
           await markRead(token, bookingId);
