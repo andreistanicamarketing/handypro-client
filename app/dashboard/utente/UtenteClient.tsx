@@ -9,9 +9,11 @@ import { useRouter } from 'next/navigation';
 import { useSession, areaForRole } from '@/lib/auth-mock';
 import {
   CalendarDays, Clock, Star, ChevronRight, Search,
-  CheckCircle2, Hourglass, BadgeCheck, Plus, X,
+  CheckCircle2, Hourglass, BadgeCheck, Plus, X, MessageSquare,
 } from 'lucide-react';
 import { getMyBookings, cancelBooking as apiCancelBooking, createReview, hueFromSlug, type UserBooking } from '@/lib/data';
+import { getUnreadCounts } from '@/lib/chat';
+import ChatSheet from '@/components/chat/ChatSheet';
 import { ProInitialsAvatar } from '@/components/search/ProResultCard';
 import ReviewSheet from '@/components/booking/ReviewSheet';
 import { cn, formatDayLong } from '@/lib/utils';
@@ -33,6 +35,8 @@ export default function UtenteClient() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [reviewFor, setReviewFor] = useState<UserBooking | null>(null);
+  const [chatFor, setChatFor] = useState<UserBooking | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   const token = session?.accessToken;
 
@@ -48,8 +52,12 @@ export default function UtenteClient() {
     let alive = true;
     setBookings(null);
     setError(null);
-    getMyBookings(token)
-      .then((b) => alive && setBookings(b))
+    Promise.all([getMyBookings(token), getUnreadCounts(token).catch(() => [])])
+      .then(([b, counts]) => {
+        if (!alive) return;
+        setBookings(b);
+        setUnreadCounts(Object.fromEntries(counts.map((c) => [c.bookingId, c.count])));
+      })
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'Errore di rete'));
     return () => {
       alive = false;
@@ -265,6 +273,19 @@ export default function UtenteClient() {
                       </Link>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setChatFor(b)}
+                    className="pressable relative mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-line text-[13px] font-bold text-ink-mute hover:border-ink/30 hover:text-ink"
+                  >
+                    <MessageSquare size={14} />
+                    Messaggi
+                    {unreadCounts[b.id] > 0 && (
+                      <span className="absolute right-3 flex h-5 min-w-5 items-center justify-center rounded-pill bg-ember px-1 text-[11px] font-extrabold text-white">
+                        {unreadCounts[b.id]}
+                      </span>
+                    )}
+                  </button>
                 </li>
               );
             })}
@@ -296,6 +317,17 @@ export default function UtenteClient() {
           } catch (e) {
             return e instanceof Error ? e.message : 'Errore di rete';
           }
+        }}
+      />
+      <ChatSheet
+        open={chatFor !== null}
+        bookingId={chatFor?.id ?? ''}
+        token={token ?? ''}
+        myUserId={session.userId}
+        otherPartyName={chatFor?.proName ?? ''}
+        onClose={() => setChatFor(null)}
+        onRead={() => {
+          if (chatFor) setUnreadCounts((prev) => ({ ...prev, [chatFor.id]: 0 }));
         }}
       />
     </div>
