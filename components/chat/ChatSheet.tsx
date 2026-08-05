@@ -34,10 +34,28 @@ export default function ChatSheet({
   // Ref "ultimo valore" per onRead: evita che una callback inline del genitore
   // (non memoizzata) faccia ripartire l'effetto di poll a ogni render.
   const onReadRef = useRef(onRead);
+  // Scroll-to-bottom: il container e il sentinel dopo l'ultimo messaggio.
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // true finché l'utente è (o è appena stato) vicino al fondo della lista;
+  // aggiornato dall'handler onScroll, quindi riflette la posizione *prima*
+  // dell'arrivo di nuovi messaggi.
+  const isNearBottomRef = useRef(true);
+  // false finché non è stato eseguito il primo autoscroll dopo l'apertura
+  // del pannello: garantisce che il caricamento iniziale atterri sempre
+  // in fondo, indipendentemente dalla posizione "vicino al fondo".
+  const hasAutoScrolledRef = useRef(false);
 
   useEffect(() => {
     onReadRef.current = onRead;
   });
+
+  function handleMessagesScroll() {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    isNearBottomRef.current =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+  }
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -54,6 +72,8 @@ export default function ChatSheet({
     setDraft('');
     setSendError(null);
     lastCreatedAt.current = undefined;
+    isNearBottomRef.current = true;
+    hasAutoScrolledRef.current = false;
 
     async function loadInitial() {
       try {
@@ -103,6 +123,18 @@ export default function ChatSheet({
       clearInterval(interval);
     };
   }, [open, bookingId, token, myUserId, reloadKey]);
+
+  // Scroll automatico in fondo: sempre al primo popolamento della lista
+  // (caricamento iniziale), altrimenti solo se l'utente era già vicino
+  // al fondo (non riportarlo giù se ha scrollato deliberatamente in alto).
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    if (!hasAutoScrolledRef.current || isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ block: 'end' });
+      hasAutoScrolledRef.current = true;
+      isNearBottomRef.current = true;
+    }
+  }, [messages]);
 
   if (!open) return null;
 
@@ -156,7 +188,11 @@ export default function ChatSheet({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleMessagesScroll}
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
+        >
           {error ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
               <p className="text-[13.5px] font-semibold text-ink-mute">{error}</p>
@@ -208,6 +244,7 @@ export default function ChatSheet({
               })}
             </ul>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         <div
