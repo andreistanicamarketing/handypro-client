@@ -44,6 +44,13 @@ function toMessage(dto: MessageDto): Message {
   };
 }
 
+function toUnreadCount(dto: UnreadCountDto): UnreadCount {
+  return {
+    bookingId: dto.bookingId,
+    count: dto.count,
+  };
+}
+
 export async function getMessages(token: string, bookingId: string, since?: Date): Promise<Message[]> {
   const query = since ? `?since=${encodeURIComponent(since.toISOString())}` : '';
   const dtos = await apiFetchAuth<MessageDto[]>(`/prenotazioni/${bookingId}/messaggi${query}`, token);
@@ -64,5 +71,5 @@ export async function markRead(token: string, bookingId: string): Promise<void> 
 
 export async function getUnreadCounts(token: string): Promise<UnreadCount[]> {
   const dtos = await apiFetchAuth<UnreadCountDto[]>('/messaggi/non-letti', token);
-  return dtos.map((d) => ({ bookingId: d.bookingId, count: d.count }));
+  return dtos.map(toUnreadCount);
 }
