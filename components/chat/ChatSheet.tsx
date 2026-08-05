@@ -145,6 +145,9 @@ export default function ChatSheet({
     setSendError(null);
     try {
       const sent = await sendMessage(token, bookingId, testo);
+      // L'utente deve sempre vedere il proprio messaggio appena inviato,
+      // anche se aveva scrollato in alto per leggere la cronologia.
+      isNearBottomRef.current = true;
       setMessages((prev) => [...(prev ?? []), sent]);
       lastCreatedAt.current = sent.createdAt;
       setDraft('');
