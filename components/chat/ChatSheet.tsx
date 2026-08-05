@@ -29,7 +29,15 @@ export default function ChatSheet({
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const lastCreatedAt = useRef<Date | undefined>(undefined);
+  // Ref "ultimo valore" per onRead: evita che una callback inline del genitore
+  // (non memoizzata) faccia ripartire l'effetto di poll a ogni render.
+  const onReadRef = useRef(onRead);
+
+  useEffect(() => {
+    onReadRef.current = onRead;
+  });
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -55,7 +63,8 @@ export default function ChatSheet({
         if (initial.length > 0) lastCreatedAt.current = initial[initial.length - 1].createdAt;
         if (initial.some((m) => m.senderId !== myUserId)) {
           await markRead(token, bookingId);
-          onRead?.();
+          if (!alive) return;
+          onReadRef.current?.();
         }
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : 'Errore di rete');
@@ -71,7 +80,8 @@ export default function ChatSheet({
         lastCreatedAt.current = fresh[fresh.length - 1].createdAt;
         if (fresh.some((m) => m.senderId !== myUserId)) {
           await markRead(token, bookingId);
-          onRead?.();
+          if (!alive) return;
+          onReadRef.current?.();
         }
       } catch {
         // errore silenzioso sul poll: non interrompe la chat, riprova al giro successivo
@@ -82,7 +92,7 @@ export default function ChatSheet({
       alive = false;
       clearInterval(interval);
     };
-  }, [open, bookingId, token, myUserId, onRead]);
+  }, [open, bookingId, token, myUserId, reloadKey]);
 
   if (!open) return null;
 
@@ -142,7 +152,10 @@ export default function ChatSheet({
               <p className="text-[13.5px] font-semibold text-ink-mute">{error}</p>
               <button
                 type="button"
-                onClick={() => setError(null)}
+                onClick={() => {
+                  setError(null);
+                  setReloadKey((k) => k + 1);
+                }}
                 className="pressable h-10 rounded-xl bg-ink px-4 text-[13px] font-bold text-white"
               >
                 Riprova
@@ -198,6 +211,7 @@ export default function ChatSheet({
           )}
           <div className="flex items-end gap-2">
             <textarea
+              aria-label="Scrivi un messaggio"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
