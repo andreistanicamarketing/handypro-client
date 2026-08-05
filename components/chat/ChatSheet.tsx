@@ -78,7 +78,13 @@ export default function ChatSheet({
         if (!alive || fresh.length === 0) return;
         setMessages((prev) => {
           const existingIds = new Set((prev ?? []).map((m) => m.id));
-          const deduped = fresh.filter((m) => !existingIds.has(m.id));
+          const deduped: typeof fresh = [];
+          for (const m of fresh) {
+            if (!existingIds.has(m.id)) {
+              existingIds.add(m.id);
+              deduped.push(m);
+            }
+          }
           return deduped.length > 0 ? [...(prev ?? []), ...deduped] : (prev ?? []);
         });
         lastCreatedAt.current = fresh[fresh.length - 1].createdAt;
