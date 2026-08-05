@@ -2,7 +2,7 @@
 
 Marketplace che connette privati con professionisti artigianali (idraulici, elettricisti, falegnami, ecc.) nella propria zona. Questo repository contiene il frontend della web app.
 
-> **Stato attuale (fase 2):** frontend collegato al backend .NET reale. Ricerca, profili, prenotazioni, recensioni e dashboard chiamano le API via `lib/data.ts`; l'autenticazione usa NextAuth (`lib/auth.ts`) con JWT emesso dal backend. **Il backend deve essere in esecuzione su `http://localhost:5000`** (vedi [`docs/setup-dev.md`](../../docs/setup-dev.md) nella root del repo) — senza backend acceso le pagine mostrano gli stati di errore con "Riprova".
+> **Stato attuale (fase 2):** frontend collegato al backend .NET reale. Ricerca, profili, prenotazioni, recensioni, chat pro↔cliente e dashboard chiamano le API via `lib/data.ts`/`lib/chat.ts`; l'autenticazione usa NextAuth (`lib/auth.ts`) con JWT emesso dal backend. **Il backend deve essere in esecuzione su `http://localhost:5000`** (vedi [`docs/setup-dev.md`](../../docs/setup-dev.md) nella root del repo) — senza backend acceso le pagine mostrano gli stati di errore con "Riprova".
 
 ---
 
@@ -108,11 +108,14 @@ app/frontend/
 │   ├── booking/
 │   │   ├── BookingSheet.tsx    # Flusso prenotazione (3 step)
 │   │   └── ReviewSheet.tsx     # Flusso recensione verificata
+│   ├── chat/
+│   │   └── ChatSheet.tsx       # Slide-over chat per prenotazione (polling 3.5s)
 │   └── map/
 │       └── MapView.tsx         # Mappa Leaflet (SSR-safe)
 │
 ├── lib/
 │   ├── data.ts                 # Data layer reale: chiama il backend e mappa i DTO per la UI
+│   ├── chat.ts                 # Data layer chat (thread, messaggi, invio, badge non letti)
 │   ├── api.ts                  # fetch autenticato verso il backend .NET
 │   ├── auth-mock.ts            # Adapter di sessione (stessa interfaccia di prima, ora su NextAuth)
 │   ├── auth.ts                 # Configurazione NextAuth (CredentialsProvider verso il backend)
@@ -161,6 +164,5 @@ Configurato in `tailwind.config.ts` e `app/globals.css`.
 
 - [ ] Implementare la pagina "Come funziona" (rimossa dalla nav, da decidere se tenerla)
 - [ ] Upload foto profilo professionista
-- [ ] Chat diretta cliente ↔ professionista
 - [ ] Sistema notifiche (richieste, conferme)
 - [ ] Versione mobile app (React Native o PWA)
