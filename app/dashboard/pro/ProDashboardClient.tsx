@@ -11,12 +11,14 @@ import { useRouter } from 'next/navigation';
 import { useSession, areaForRole } from '@/lib/auth-mock';
 import {
   Inbox, CalendarDays, Clock, Star, Eye, TrendingUp, Search,
-  Check, X, Sparkles, ChevronRight, BadgeCheck,
+  Check, X, Sparkles, ChevronRight, BadgeCheck, MessageSquare,
 } from 'lucide-react';
 import {
   getProBookings, confirmBooking, completeBooking, cancelBooking,
   getProBySlug, getReviews, type ProRequest, type Pro, type Review,
 } from '@/lib/data';
+import { getUnreadCounts } from '@/lib/chat';
+import ChatSheet from '@/components/chat/ChatSheet';
 import { cn, formatDayLong, timeAgo, toDateKey } from '@/lib/utils';
 
 type Tab = 'richieste' | 'agenda';
@@ -37,6 +39,8 @@ export default function ProDashboardClient() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [justAccepted, setJustAccepted] = useState<string | null>(null);
+  const [chatFor, setChatFor] = useState<ProRequest | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   // Guard: solo professionisti loggati
   useEffect(() => {
@@ -53,12 +57,14 @@ export default function ProDashboardClient() {
       getProBookings(token),
       getProBySlug(proSlug),
       getReviews(proSlug).catch(() => []),
+      getUnreadCounts(token).catch(() => []),
     ])
-      .then(([reqs, proData, revs]) => {
+      .then(([reqs, proData, revs, counts]) => {
         if (!alive) return;
         setRequests(reqs);
         setPro(proData);
         setReviews(revs.slice(0, 2));
+        setUnreadCounts(Object.fromEntries(counts.map((c) => [c.bookingId, c.count])));
       })
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'Errore di rete'));
     return () => {
@@ -313,6 +319,19 @@ export default function ProDashboardClient() {
                           Rifiuta
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setChatFor(r)}
+                        className="pressable relative mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-line text-[13px] font-bold text-ink-mute hover:border-ink/30 hover:text-ink"
+                      >
+                        <MessageSquare size={14} />
+                        Messaggi
+                        {unreadCounts[r.id] > 0 && (
+                          <span className="absolute right-3 flex h-5 min-w-5 items-center justify-center rounded-pill bg-ember px-1 text-[11px] font-extrabold text-white">
+                            {unreadCounts[r.id]}
+                          </span>
+                        )}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -355,6 +374,19 @@ export default function ProDashboardClient() {
                                 {r.clientName}
                               </span>
                             </span>
+                            <button
+                              type="button"
+                              onClick={() => setChatFor(r)}
+                              aria-label="Messaggi"
+                              className="pressable relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-mute hover:border-ink/30 hover:text-ink"
+                            >
+                              <MessageSquare size={15} />
+                              {unreadCounts[r.id] > 0 && (
+                                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-ember px-1 text-[9.5px] font-extrabold text-white">
+                                  {unreadCounts[r.id]}
+                                </span>
+                              )}
+                            </button>
                             {justAccepted === r.id && (
                               <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-bold text-verde">
                                 <BadgeCheck size={14} />
@@ -423,6 +455,18 @@ export default function ProDashboardClient() {
           )}
         </section>
       </div>
+
+      <ChatSheet
+        open={chatFor !== null}
+        bookingId={chatFor?.id ?? ''}
+        token={token ?? ''}
+        myUserId={session.userId}
+        otherPartyName={chatFor?.clientName ?? ''}
+        onClose={() => setChatFor(null)}
+        onRead={() => {
+          if (chatFor) setUnreadCounts((prev) => ({ ...prev, [chatFor.id]: 0 }));
+        }}
+      />
     </div>
   );
 }

@@ -17,6 +17,8 @@ export interface MockSession {
   proSlug?: string;
   /** JWT del backend, per le chiamate autenticate a lib/data.ts */
   accessToken: string;
+  /** Id utente (session.user.id di NextAuth), per confrontare il mittente nei messaggi chat */
+  userId: string;
 }
 
 /** Account demo creati dal seeder del backend — credenziali mostrate nella pagina di accesso */
@@ -48,6 +50,7 @@ export async function login(email: string, password: string): Promise<MockSessio
     role: session.user.role,
     proSlug: session.user.proSlug,
     accessToken: session.accessToken,
+    userId: session.user.id,
   };
 }
 
@@ -89,6 +92,7 @@ export function useSession(): { session: MockSession | null; ready: boolean } {
         role: data.user.role,
         proSlug: data.user.proSlug,
         accessToken: data.accessToken,
+        userId: data.user.id,
       }
     : null;
   return { session, ready: status !== 'loading' };
