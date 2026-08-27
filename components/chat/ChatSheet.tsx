@@ -271,6 +271,7 @@ export default function ChatSheet({
                 }
               }}
               rows={1}
+              maxLength={2000}
               placeholder="Scrivi un messaggio…"
               disabled={sending}
               className="min-h-11 flex-1 resize-none rounded-2xl border border-line bg-white px-3.5 py-2.5 text-[14.5px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember disabled:opacity-60"
