@@ -15,6 +15,12 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 
 const PRICE_LABEL = { low: '€', medium: '€€', high: '€€€' } as const;
 
+// Senza questo la home resta ferma ai dati del build: la fetch qui sotto gira
+// una volta sola e il risultato viene cotto dentro la pagina statica.
+// Rigenerazione ogni 5 minuti invece che a ogni richiesta, così il visitatore
+// non paga mai la latenza dell'API (o il risveglio del backend su Render).
+export const revalidate = 300;
+
 export default async function HomePage() {
   let topPros: Pro[] = [];
   let totalPros = 0;
