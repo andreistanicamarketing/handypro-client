@@ -31,7 +31,7 @@ const MapViewInner = dynamic(
     const { useEffect } = await import('react');
 
     function makePin(highlighted: boolean) {
-      const bg = highlighted ? '#F5821F' : '#152238';
+      const bg = highlighted ? '#FF6600' : '#152238';
       const size = highlighted ? 38 : 32;
       return L.divIcon({
         className: '',

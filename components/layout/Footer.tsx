@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Logo } from './Navbar';
+import { Wordmark } from './Navbar';
 
 const COLUMNS = [
   {
@@ -35,7 +35,7 @@ export default function Footer() {
     <footer className="bg-ink-gradient text-white">
       <div className="mx-auto max-w-content px-5 pb-10 pt-14 md:px-8">
         <div className="mb-10">
-          <Logo light />
+          <Wordmark className="h-7 w-auto text-white" />
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/55">
             Il professionista giusto, a portata di mano. Recensioni verificate
             da lavori reali.

@@ -3,6 +3,7 @@
 // Top bar — minimale su mobile (logo + accedi), completa su desktop.
 // Link di navigazione centrali adattati al ruolo dell'utente.
 
+import { useId } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
@@ -24,20 +25,34 @@ function getNavLinks(session: MockSession | null) {
   ];
 }
 
-export function Logo({ light = false }: { light?: boolean }) {
+// Logo esteso "handypro" — tracciati da logo-dp/logo-esteso/handypro-colore.svg.
+// "handy" segue currentColor, "pro" resta arancione.
+export function Wordmark({ className }: { className?: string }) {
+  // id univoco: la scritta compare più volte nella stessa pagina (navbar + footer)
+  const clipId = useId().replace(/:/g, ''); // i ':' di useId non sono validi in url(#…)
   return (
-    <span
-      className={cn(
-        'text-[19px] font-extrabold tracking-tight',
-        light ? 'text-white' : 'text-ink'
-      )}
-    >
-      Handy<span className={light ? 'text-white/70' : 'text-ink-soft'}>Pro</span>
-      <span
-        aria-hidden
-        className="mb-1 ml-[3px] inline-block h-[5px] w-[5px] rounded-full bg-ember align-middle"
-      />
-    </span>
+    <svg viewBox="0 96 2194 416" role="img" aria-label="Handy Pro" className={className}>
+      <clipPath id={clipId}>
+        <rect x="1090" y="196" width="290" height="330" />
+      </clipPath>
+      <g fill="none" strokeWidth="52" strokeLinecap="butt" strokeLinejoin="round">
+        <g stroke="currentColor">
+          <path d="M26 96 V416 M26 222 H150 A64 64 0 0 1 214 286 V416" />
+          <path d="M498 416 V286 A64 64 0 0 0 434 222 H366 A64 64 0 0 0 302 286 V326 A64 64 0 0 0 366 390 H498" />
+          <path d="M586 416 V286 A64 64 0 0 1 650 222 H710 A64 64 0 0 1 774 286 V416" />
+          <path d="M1058 96 V416 M1058 222 H926 A64 64 0 0 0 862 286 V326 A64 64 0 0 0 926 390 H1058" />
+          <g clipPath={`url(#${clipId})`}>
+            <path d="M1354 144 L1208 436 Q1183 486 1149 486 H1104" />
+            <path d="M1107 144 L1230.5 391" />
+          </g>
+        </g>
+        <g stroke="#FF6600">
+          <path d="M1398 512 V286 A64 64 0 0 1 1462 222 H1530 A64 64 0 0 1 1594 286 V326 A64 64 0 0 1 1530 390 H1398" />
+          <path d="M1682 416 V286 A64 64 0 0 1 1746 222 H1826" />
+          <rect x="1876" y="222" width="292" height="168" rx="84" />
+        </g>
+      </g>
+    </svg>
   );
 }
 
@@ -57,7 +72,7 @@ export default function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-cream/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-shell items-center justify-between px-4 md:h-16 md:px-8">
         <Link href="/" aria-label="Handy Pro — home">
-          <Logo />
+          <Wordmark className="h-[22px] w-auto text-ink md:h-6" />
         </Link>
 
         {/* Link centrali — solo desktop, role-aware */}
