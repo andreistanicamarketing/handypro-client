@@ -26,7 +26,7 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   },
   'solid-orange': {
     border: 'none',
-    background: '#F5821F',
+    background: '#FF6600',
     color: '#ffffff',
   },
 };

@@ -16,6 +16,7 @@ import { ApiError } from '@/lib/api';
 import { CATEGORIES } from '@/lib/categories';
 import type { UserRole } from '@/types';
 import { cn } from '@/lib/utils';
+import { Wordmark } from '@/components/layout/Navbar';
 
 type Tab = 'accedi' | 'registrati';
 
@@ -134,7 +135,11 @@ export default function AuthClient() {
       <div className="mx-auto max-w-md px-4 pb-12 pt-6 md:pt-12">
         <h1 className="mb-1 text-center text-[26px] font-extrabold tracking-tight text-ink">
           {tab === 'accedi' ? (
-            <>Bentornato su Handy<em className="font-accent text-ember-deep">Pro</em></>
+            <>
+              {/* ascendente ≈ altezza maiuscole; align negativo = discendente di p/y sotto la baseline */}
+              Bentornato su{' '}
+              <Wordmark className="ml-[0.12em] inline-block h-[0.95em] w-auto align-[-0.22em] text-ink" />
+            </>
           ) : (
             <>Crea il tuo <em className="font-accent text-ember-deep">account</em></>
           )}

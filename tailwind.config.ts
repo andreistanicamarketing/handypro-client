@@ -6,7 +6,7 @@ import type { Config } from 'tailwindcss';
 //   ink    → testo e superfici scure (blu inchiostro profondo)
 //   cream  → canvas dell'app (off-white caldo)
 //   sand   → superfici secondarie (beige sabbia)
-//   ember  → unico accento (arancio brand #F5821F)
+//   ember  → unico accento (arancio brand #FF6600)
 // ────────────────────────────────────────────────────────────────
 
 const config: Config = {
@@ -30,9 +30,9 @@ const config: Config = {
           deep: '#E6DCCD',
         },
         ember: {
-          DEFAULT: '#F5821F',
-          soft: '#FDEEDD',
-          deep: '#D96A0B',
+          DEFAULT: '#FF6600',
+          soft: '#FFEADB',
+          deep: '#E05500',
         },
         verde: {
           DEFAULT: '#2E7D5B',
@@ -42,7 +42,7 @@ const config: Config = {
         // alias legacy (componenti esistenti)
         brand: {
           blue: '#1A3557',
-          orange: '#F5821F',
+          orange: '#FF6600',
           text: '#152238',
           grey: '#5C6B82',
         },
@@ -66,8 +66,8 @@ const config: Config = {
         'hero-gradient':
           'linear-gradient(160deg, #FFFDF9 0%, #FFF3E8 30%, #FFD4A8 60%, #F5A06A 100%)',
         'cta-gradient':
-          'radial-gradient(ellipse at top left, #2D1B69 0%, #C0392B 50%, #F5821F 100%)',
-        'ember-gradient': 'linear-gradient(135deg, #F5821F 0%, #E85D04 100%)',
+          'radial-gradient(ellipse at top left, #2D1B69 0%, #C0392B 50%, #FF6600 100%)',
+        'ember-gradient': 'linear-gradient(135deg, #FF6600 0%, #E85D04 100%)',
         'ink-gradient': 'linear-gradient(160deg, #1A3557 0%, #152238 70%)',
       },
       maxWidth: {
