@@ -2,8 +2,8 @@
 
 // Errore di rendering (es. backend non raggiungibile).
 
-import Link from 'next/link';
 import { Wordmark } from '@/components/layout/Navbar';
+import Button from '@/components/ui/Button';
 
 export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
@@ -16,19 +16,19 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
         Non siamo riusciti a caricare la pagina. Riprova tra qualche istante.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <button
-          type="button"
+        <Button
           onClick={reset}
-          className="pressable inline-flex h-11 items-center rounded-2xl bg-ember-gradient px-5 text-[14px] font-bold text-white"
+          size="md"
         >
           Riprova
-        </button>
-        <Link
+        </Button>
+        <Button
           href="/"
-          className="pressable inline-flex h-11 items-center rounded-2xl border border-line px-5 text-[14px] font-bold text-ink"
+          variant="outline"
+          size="md"
         >
           Torna alla home
-        </Link>
+        </Button>
       </div>
     </div>
   );

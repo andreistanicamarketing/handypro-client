@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Send } from 'lucide-react';
 import { getMessages, sendMessage, markRead, type Message } from '@/lib/chat';
 import { cn, timeAgo } from '@/lib/utils';
+import Sheet from '@/components/ui/Sheet';
+import Button, { IconButton } from '@/components/ui/Button';
 
 const POLL_INTERVAL_MS = 3500;
 
@@ -56,13 +58,6 @@ export default function ChatSheet({
     isNearBottomRef.current =
       container.scrollHeight - container.scrollTop - container.clientHeight < 150;
   }
-
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -159,135 +154,112 @@ export default function ChatSheet({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center sm:justify-center sm:px-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Chat con ${otherPartyName}`}
-    >
-      <button
-        type="button"
-        aria-label="Chiudi"
-        onClick={onClose}
-        className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]"
-      />
+    <Sheet open={open} onClose={onClose} label={`Chat con ${otherPartyName}`} className="sm:h-[600px] sm:w-[420px]">
+      <div className="flex items-center gap-2 border-b border-line px-5 pb-3 pt-3 sm:pt-5">
+        <p className="min-w-0 flex-1 truncate text-[15.5px] font-bold text-ink">
+          {otherPartyName}
+        </p>
+        <IconButton onClick={onClose} aria-label="Chiudi">
+          <X size={18} />
+        </IconButton>
+      </div>
 
-      <div className="relative z-10 flex w-full max-h-[92dvh] flex-col overflow-hidden rounded-t-sheet bg-white shadow-lift animate-fade-up sm:h-[600px] sm:max-h-[85vh] sm:w-[420px] sm:rounded-sheet">
-        <div className="flex justify-center pt-2.5 sm:hidden" aria-hidden>
-          <span className="h-1 w-10 rounded-pill bg-line" />
-        </div>
-
-        <div className="flex items-center gap-2 border-b border-line px-5 pb-3 pt-3 sm:pt-5">
-          <p className="min-w-0 flex-1 truncate text-[15.5px] font-bold text-ink">
-            {otherPartyName}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleMessagesScroll}
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
+      >
+        {error ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <p className="text-[13.5px] font-semibold text-ink-mute">{error}</p>
+            <Button
+              onClick={() => {
+                setError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              variant="dark"
+              size="sm"
+            >
+              Riprova
+            </Button>
+          </div>
+        ) : messages === null ? (
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-10 w-2/3 animate-pulse rounded-2xl bg-sand" />
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
+          <p className="pt-8 text-center text-[13.5px] text-ink-faint">
+            Ancora nessun messaggio. Scrivi tu per primo.
           </p>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Chiudi"
-            className="pressable flex h-9 w-9 items-center justify-center rounded-full text-ink-mute hover:bg-sand"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleMessagesScroll}
-          className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
-        >
-          {error ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-              <p className="text-[13.5px] font-semibold text-ink-mute">{error}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setError(null);
-                  setReloadKey((k) => k + 1);
-                }}
-                className="pressable h-10 rounded-xl bg-ink px-4 text-[13px] font-bold text-white"
-              >
-                Riprova
-              </button>
-            </div>
-          ) : messages === null ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-10 w-2/3 animate-pulse rounded-2xl bg-sand" />
-              ))}
-            </div>
-          ) : messages.length === 0 ? (
-            <p className="pt-8 text-center text-[13.5px] text-ink-faint">
-              Ancora nessun messaggio. Scrivi tu per primo.
-            </p>
-          ) : (
-            <ul className="space-y-2.5">
-              {messages.map((m) => {
-                const mine = m.senderId === myUserId;
-                return (
-                  <li key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
-                    <div
+        ) : (
+          <ul className="space-y-2.5">
+            {messages.map((m) => {
+              const mine = m.senderId === myUserId;
+              return (
+                <li key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
+                  <div
+                    className={cn(
+                      'max-w-[78%] rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed',
+                      mine ? 'bg-ember-gradient text-white' : 'bg-sand text-ink'
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                    <p
                       className={cn(
-                        'max-w-[78%] rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed',
-                        mine ? 'bg-ember-gradient text-white' : 'bg-sand text-ink'
+                        'mt-1 text-[10.5px] font-semibold',
+                        mine ? 'text-white/70' : 'text-ink-faint'
                       )}
                     >
-                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                      <p
-                        className={cn(
-                          'mt-1 text-[10.5px] font-semibold',
-                          mine ? 'text-white/70' : 'text-ink-faint'
-                        )}
-                      >
-                        {timeAgo(m.createdAt)}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+                      {timeAgo(m.createdAt)}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-        <div
-          className="border-t border-line px-4 pt-3"
-          style={{ paddingBottom: 'calc(12px + var(--safe-bottom))' }}
-        >
-          {sendError && (
-            <p role="alert" className="mb-2 text-[12.5px] font-semibold text-red-500">
-              {sendError}
-            </p>
-          )}
-          <div className="flex items-end gap-2">
-            <textarea
-              aria-label="Scrivi un messaggio"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  void handleSend();
-                }
-              }}
-              rows={1}
-              maxLength={2000}
-              placeholder="Scrivi un messaggio…"
-              disabled={sending}
-              className="min-h-11 flex-1 resize-none rounded-2xl border border-line bg-white px-3.5 py-2.5 text-[14.5px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember disabled:opacity-60"
-            />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={sending || draft.trim().length === 0}
-              aria-label="Invia"
-              className="pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ember-gradient text-white disabled:opacity-40"
-            >
-              <Send size={17} />
-            </button>
-          </div>
+      <div
+        className="border-t border-line px-4 pt-3"
+        style={{ paddingBottom: 'calc(12px + var(--safe-bottom))' }}
+      >
+        {sendError && (
+          <p role="alert" className="mb-2 text-[12.5px] font-semibold text-red-500">
+            {sendError}
+          </p>
+        )}
+        <div className="flex items-end gap-2">
+          <textarea
+            aria-label="Scrivi un messaggio"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                void handleSend();
+              }
+            }}
+            rows={1}
+            maxLength={2000}
+            placeholder="Scrivi un messaggio…"
+            disabled={sending}
+            className="min-h-11 flex-1 resize-none rounded-2xl border border-line bg-white px-3.5 py-2.5 text-[14.5px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember disabled:opacity-60"
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={sending || draft.trim().length === 0}
+            aria-label="Invia"
+            className="pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ember-gradient text-white disabled:opacity-40"
+          >
+            <Send size={17} />
+          </button>
         </div>
       </div>
-    </div>
+    </Sheet>
   );
 }

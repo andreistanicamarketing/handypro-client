@@ -17,6 +17,8 @@ import ChatSheet from '@/components/chat/ChatSheet';
 import { ProInitialsAvatar } from '@/components/search/ProResultCard';
 import ReviewSheet from '@/components/booking/ReviewSheet';
 import { cn, formatDayLong } from '@/lib/utils';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 type Tab = 'prossimi' | 'completati';
 
@@ -140,17 +142,17 @@ export default function UtenteClient() {
 
         {/* lista */}
         {error ? (
-          <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+          <Card className="p-10 text-center">
             <p className="mb-1 font-bold text-ink">Impossibile caricare le prenotazioni</p>
             <p className="mb-4 text-[14px] text-ink-mute">{error}</p>
-            <button
-              type="button"
+            <Button
               onClick={() => setReloadKey((k) => k + 1)}
-              className="pressable h-11 rounded-2xl bg-ink px-5 text-[14px] font-bold text-white"
+              variant="dark"
+              size="md"
             >
               Riprova
-            </button>
-          </div>
+            </Button>
+          </Card>
         ) : bookings === null ? (
           <div className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {[0, 1, 2].map((i) => (
@@ -158,7 +160,7 @@ export default function UtenteClient() {
             ))}
           </div>
         ) : list.length === 0 ? (
-          <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+          <Card className="p-10 text-center">
             <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sand text-ink-mute">
               <CalendarDays size={24} />
             </span>
@@ -171,24 +173,24 @@ export default function UtenteClient() {
                 : 'Qui trovi i lavori conclusi e quelli annullati. Quelli conclusi puoi recensirli.'}
             </p>
             {tab === 'prossimi' && (
-              <Link
+              <Button
                 href="/cerca"
-                className="pressable inline-flex h-11 items-center gap-2 rounded-2xl bg-ember-gradient px-5 text-[14px] font-bold text-white"
+                size="md"
               >
                 <Search size={15} />
                 Cerca un professionista
-              </Link>
+              </Button>
             )}
-          </div>
+          </Card>
         ) : (
           <ul className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {list.map((b) => {
               const status = STATUS_META[b.status];
               const canAct = b.status === 'pending' || b.status === 'confirmed';
               return (
-                <li
+                <Card as="li"
                   key={b.id}
-                  className="rounded-card border border-line bg-white p-4 shadow-chip md:p-5"
+                  className="p-4 md:p-5"
                 >
                   {/* stato */}
                   <div className="mb-3 flex items-center justify-between gap-2">
@@ -239,44 +241,50 @@ export default function UtenteClient() {
                   <div className="mt-3 flex gap-2">
                     {canAct && (
                       <>
-                        <Link
+                        <Button
                           href={`/pro/${b.proSlug}`}
-                          className="pressable flex h-10 flex-1 items-center justify-center rounded-xl border border-ink/15 text-[13px] font-bold text-ink hover:bg-ink hover:text-white"
+                          variant="subtle"
+                          size="sm"
+                          className="flex-1"
                         >
                           Vedi profilo
-                        </Link>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
                           onClick={() => handleCancel(b.id)}
-                          className="pressable flex h-10 flex-1 items-center justify-center rounded-xl border border-line text-[13px] font-bold text-ink-mute hover:border-red-300 hover:text-red-500"
+                          variant="danger"
+                          size="sm"
+                          className="flex-1"
                         >
                           Annulla
-                        </button>
+                        </Button>
                       </>
                     )}
                     {b.status === 'completed' && !b.reviewed && (
-                      <button
-                        type="button"
+                      <Button
                         onClick={() => setReviewFor(b)}
-                        className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-ember-gradient text-[13px] font-bold text-white"
+                        size="sm"
+                        className="flex-1"
                       >
                         <Star size={14} />
                         Lascia una recensione verificata
-                      </button>
+                      </Button>
                     )}
                     {b.status === 'completed' && b.reviewed && (
-                      <Link
+                      <Button
                         href={`/pro/${b.proSlug}`}
-                        className="pressable flex h-10 flex-1 items-center justify-center rounded-xl border border-ink/15 text-[13px] font-bold text-ink hover:bg-ink hover:text-white"
+                        variant="subtle"
+                        size="sm"
+                        className="flex-1"
                       >
                         Prenota di nuovo
-                      </Link>
+                      </Button>
                     )}
                   </div>
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => setChatFor(b)}
-                    className="pressable relative mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-line text-[13px] font-bold text-ink-mute hover:border-ink/30 hover:text-ink"
+                    variant="muted"
+                    size="sm"
+                    className="relative mt-2 w-full"
                   >
                     <MessageSquare size={14} />
                     Messaggi
@@ -285,21 +293,22 @@ export default function UtenteClient() {
                         {unreadCounts[b.id]}
                       </span>
                     )}
-                  </button>
-                </li>
+                  </Button>
+                </Card>
               );
             })}
           </ul>
         )}
 
         {/* CTA mobile nuova richiesta */}
-        <Link
+        <Button
           href="/cerca"
-          className="pressable mt-5 flex h-12 items-center justify-center gap-2 rounded-2xl border border-line bg-white text-[14.5px] font-bold text-ink shadow-chip md:hidden"
+          variant="outline"
+          className="flex mt-5 shadow-chip md:hidden"
         >
           <Plus size={16} />
           Nuova prenotazione
-        </Link>
+        </Button>
       </div>
 
       {/* sheet recensione */}

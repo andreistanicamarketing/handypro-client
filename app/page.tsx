@@ -8,6 +8,7 @@ import {
 import SearchBar from '@/components/search/SearchBar';
 import { CATEGORIES } from '@/lib/categories';
 import { searchPros, type Pro } from '@/lib/data';
+import Button from '@/components/ui/Button';
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Droplets, Zap, BrickWall, Hammer, Leaf, PaintRoller, Wind, KeyRound,
@@ -180,12 +181,13 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-4 px-5 md:hidden">
-            <Link
+            <Button
               href="/cerca"
-              className="pressable flex h-12 items-center justify-center gap-1.5 rounded-2xl border border-line bg-white text-[14.5px] font-bold text-ink shadow-chip"
+              variant="outline"
+              className="flex shadow-chip"
             >
               Vedi tutti i professionisti <ArrowRight size={15} />
-            </Link>
+            </Button>
           </div>
         </section>
       )}
@@ -251,12 +253,12 @@ export default async function HomePage() {
               Profilo pubblico, richieste dei clienti e recensioni verificate.
               Iscrizione gratuita, senza vincoli.
             </p>
-            <Link
+            <Button
               href="/registrati?tipo=professionista"
-              className="pressable inline-flex h-12 items-center gap-2 rounded-2xl bg-ember-gradient px-6 text-[15px] font-bold text-white shadow-lift"
+              className="shadow-lift"
             >
               Crea il tuo profilo <ArrowRight size={17} />
-            </Link>
+            </Button>
           </div>
         </div>
       </section>

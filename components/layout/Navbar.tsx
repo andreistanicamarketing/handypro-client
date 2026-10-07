@@ -5,6 +5,7 @@
 
 import { useId } from 'react';
 import Link from 'next/link';
+import { IconButton } from '@/components/ui/Button';
 import { usePathname, useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { useSession, logout, areaForRole, type MockSession } from '@/lib/auth-mock';
@@ -106,18 +107,16 @@ export default function Navbar() {
                 </span>
                 <span className="max-w-[110px] truncate">{session.name.split(' ')[0]}</span>
               </Link>
-              <button
-                type="button"
+              <IconButton
                 onClick={() => {
                   logout();
                   router.push('/');
                 }}
                 aria-label="Esci"
                 title="Esci"
-                className="pressable flex h-9 w-9 items-center justify-center rounded-full text-ink-mute hover:bg-sand hover:text-ink"
               >
                 <LogOut size={16} />
-              </button>
+              </IconButton>
             </>
           ) : (
             <>

@@ -20,6 +20,8 @@ import {
 import { getUnreadCounts } from '@/lib/chat';
 import ChatSheet from '@/components/chat/ChatSheet';
 import { cn, formatDayLong, timeAgo, toDateKey } from '@/lib/utils';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 type Tab = 'richieste' | 'agenda';
 
@@ -152,7 +154,7 @@ export default function ProDashboardClient() {
 
         {/* statistiche settimana */}
         <div className="mb-4 grid grid-cols-3 gap-2.5">
-          <div className="rounded-card border border-line bg-white p-3.5 shadow-chip">
+          <Card className="p-3.5">
             <p className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">
               <Eye size={12} /> Profilo
             </p>
@@ -162,16 +164,16 @@ export default function ProDashboardClient() {
               {PRO_STATS.viewsTrend} sett.
             </p>
             <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">dati demo</p>
-          </div>
-          <div className="rounded-card border border-line bg-white p-3.5 shadow-chip">
+          </Card>
+          <Card className="p-3.5">
             <p className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">
               <Search size={12} /> Ricerche
             </p>
             <p className="mt-1 text-[20px] font-extrabold text-ink">{PRO_STATS.searchAppearances}</p>
             <p className="text-[11.5px] font-medium text-ink-faint">apparizioni</p>
             <p className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-faint">dati demo</p>
-          </div>
-          <div className="rounded-card border border-line bg-white p-3.5 shadow-chip">
+          </Card>
+          <Card className="p-3.5">
             <p className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">
               <Star size={12} /> Voto medio
             </p>
@@ -180,7 +182,7 @@ export default function ProDashboardClient() {
               <Star size={14} className="fill-ember text-ember" />
             </p>
             <p className="text-[11.5px] font-medium text-ink-faint">{pro?.reviewCount ?? 0} {pro?.reviewCount === 1 ? 'recensione' : 'recensioni'}</p>
-          </div>
+          </Card>
         </div>
 
         {/* upsell Vetrina */}
@@ -240,17 +242,17 @@ export default function ProDashboardClient() {
 
         {/* stato caricamento / errore */}
         {error ? (
-          <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+          <Card className="p-10 text-center">
             <p className="mb-1 font-bold text-ink">Impossibile caricare le richieste</p>
             <p className="mb-4 text-[14px] text-ink-mute">{error}</p>
-            <button
-              type="button"
+            <Button
               onClick={() => setReloadKey((k) => k + 1)}
-              className="pressable h-11 rounded-2xl bg-ink px-5 text-[14px] font-bold text-white"
+              variant="dark"
+              size="md"
             >
               Riprova
-            </button>
-          </div>
+            </Button>
+          </Card>
         ) : requests === null ? (
           <div className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {[0, 1, 2].map((i) => (
@@ -262,7 +264,7 @@ export default function ProDashboardClient() {
             {/* ── Tab richieste ── */}
             {tab === 'richieste' &&
               (pending.length === 0 ? (
-                <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+                <Card className="p-10 text-center">
                   <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sand text-ink-mute">
                     <Inbox size={24} />
                   </span>
@@ -270,13 +272,13 @@ export default function ProDashboardClient() {
                   <p className="mx-auto max-w-[280px] text-[14px] text-ink-mute">
                     Quando un cliente ti chiede un intervento, la richiesta compare qui.
                   </p>
-                </div>
+                </Card>
               ) : (
                 <ul className="space-y-3.5 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
                   {pending.map((r) => (
-                    <li
+                    <Card as="li"
                       key={r.id}
-                      className="rounded-card border border-line bg-white p-4 shadow-chip animate-fade-up md:p-5"
+                      className="p-4 animate-fade-up md:p-5"
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <p className="text-[15px] font-bold text-ink">{r.clientName}</p>
@@ -301,27 +303,29 @@ export default function ProDashboardClient() {
                         </p>
                       )}
                       <div className="mt-3 flex gap-2">
-                        <button
-                          type="button"
+                        <Button
                           onClick={() => accept(r.id)}
-                          className="pressable flex h-10 flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-ember-gradient text-[13.5px] font-bold text-white"
+                          size="sm"
+                          className="flex-[1.4]"
                         >
                           <Check size={15} strokeWidth={3} />
                           Accetta
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
                           onClick={() => decline(r.id)}
-                          className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-[13.5px] font-bold text-ink-mute hover:border-red-300 hover:text-red-500"
+                          variant="danger"
+                          size="sm"
+                          className="flex-1"
                         >
                           <X size={15} />
                           Rifiuta
-                        </button>
+                        </Button>
                       </div>
-                      <button
-                        type="button"
+                      <Button
                         onClick={() => setChatFor(r)}
-                        className="pressable relative mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-line text-[13px] font-bold text-ink-mute hover:border-ink/30 hover:text-ink"
+                        variant="muted"
+                        size="sm"
+                        className="relative mt-2 w-full"
                       >
                         <MessageSquare size={14} />
                         Messaggi
@@ -330,8 +334,8 @@ export default function ProDashboardClient() {
                             {unreadCounts[r.id]}
                           </span>
                         )}
-                      </button>
-                    </li>
+                      </Button>
+                    </Card>
                   ))}
                 </ul>
               ))}
@@ -340,12 +344,12 @@ export default function ProDashboardClient() {
             {tab === 'agenda' && (
               <div className="space-y-5">
                 {agendaDays.length === 0 ? (
-                  <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+                  <Card className="p-10 text-center">
                     <p className="font-bold text-ink">Agenda vuota</p>
                     <p className="text-[14px] text-ink-mute">
                       Gli appuntamenti accettati compaiono qui.
                     </p>
-                  </div>
+                  </Card>
                 ) : (
                   agendaDays.map(({ date, items }) => (
                     <div key={date.toISOString()}>
@@ -431,7 +435,7 @@ export default function ProDashboardClient() {
           ) : (
             <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
               {reviews.map((rv) => (
-                <li key={rv.id} className="rounded-card border border-line bg-white p-4 shadow-chip">
+                <Card as="li" key={rv.id} className="p-4">
                   <div className="mb-1 flex items-center justify-between">
                     <p className="text-[13.5px] font-bold text-ink">{rv.reviewerName}</p>
                     <span className="flex gap-0.5">
@@ -448,7 +452,7 @@ export default function ProDashboardClient() {
                     ✓ lavoro confermato · {timeAgo(rv.createdAt)}
                   </p>
                   <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-mute">{rv.text}</p>
-                </li>
+                </Card>
               ))}
             </ul>
           )}

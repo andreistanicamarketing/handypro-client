@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Button from '@/components/ui/Button';
 
 export const metadata: Metadata = {
   title: 'Chi siamo — Handy Pro',
@@ -63,12 +63,12 @@ export default function ChiSiamoPage() {
           </section>
         </div>
 
-        <Link
+        <Button
           href="/cerca"
-          className="pressable mt-10 inline-flex h-12 items-center rounded-2xl bg-ember-gradient px-6 text-[15px] font-bold text-white"
+          className="mt-10"
         >
           Cerca un professionista
-        </Link>
+        </Button>
       </div>
     </div>
   );

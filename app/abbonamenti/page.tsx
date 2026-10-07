@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Check, Sparkles } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 export const metadata: Metadata = {
   title: 'Abbonamenti — Handy Pro',
@@ -34,7 +35,7 @@ export default function AbbonamentiPage() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <section className="rounded-card border border-line bg-white p-6 shadow-chip">
+          <Card as="section" className="p-6">
             <h2 className="text-[19px] font-extrabold tracking-tight text-ink">Base</h2>
             <p className="mb-4 text-[24px] font-extrabold text-ink">Gratis</p>
             <ul className="mb-6 space-y-2.5">
@@ -45,13 +46,14 @@ export default function AbbonamentiPage() {
                 </li>
               ))}
             </ul>
-            <Link
+            <Button
               href="/registrati?tipo=professionista"
-              className="pressable flex h-12 items-center justify-center rounded-2xl border border-line text-[15px] font-bold text-ink"
+              variant="outline"
+              className="flex"
             >
               Crea il tuo profilo gratis
-            </Link>
-          </section>
+            </Button>
+          </Card>
 
           <section className="rounded-card bg-ink-gradient p-6 text-white">
             <h2 className="flex items-center gap-2 text-[19px] font-extrabold tracking-tight">
@@ -67,12 +69,12 @@ export default function AbbonamentiPage() {
                 </li>
               ))}
             </ul>
-            <a
+            <Button
               href="mailto:info@handypro.it?subject=Lista%20d'attesa%20Vetrina"
-              className="pressable flex h-12 items-center justify-center rounded-2xl bg-ember-gradient text-[15px] font-bold text-white"
+              className="flex"
             >
               Entra in lista d&rsquo;attesa
-            </a>
+            </Button>
             <p className="mt-3 text-center text-[12.5px] text-white/55">
               Ti scriviamo noi quando sarà disponibile.
             </p>

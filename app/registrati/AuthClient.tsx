@@ -18,6 +18,7 @@ import { CATEGORIES } from '@/lib/categories';
 import type { UserRole } from '@/types';
 import { cn } from '@/lib/utils';
 import { Wordmark } from '@/components/layout/Navbar';
+import Button from '@/components/ui/Button';
 
 type Tab = 'accedi' | 'registrati';
 
@@ -110,21 +111,20 @@ export default function AuthClient() {
             </span>
             .
           </p>
-          <button
-            type="button"
+          <Button
             onClick={() => router.push(areaForRole(session.role))}
-            className="pressable mb-2.5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ember-gradient text-[15px] font-bold text-white"
+            className="mb-2.5 w-full"
           >
             Vai alla tua area <ArrowRight size={16} />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={() => logout()}
-            className="pressable flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-line text-[14.5px] font-bold text-ink-mute hover:border-red-300 hover:text-red-500"
+            variant="danger"
+            className="w-full"
           >
             <LogOut size={15} />
             Esci
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -233,13 +233,13 @@ export default function AuthClient() {
                 </p>
               )}
 
-              <button
+              <Button
                 type="submit"
-                className="pressable flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ember-gradient text-[15px] font-bold text-white"
+                className="w-full"
               >
                 <LogIn size={16} />
                 Accedi
-              </button>
+              </Button>
             </form>
 
             {/* accesso rapido demo */}
@@ -411,12 +411,12 @@ export default function AuthClient() {
               </p>
             )}
 
-            <button
+            <Button
               type="submit"
-              className="pressable mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ember-gradient text-[15px] font-bold text-white"
+              className="mt-1 w-full"
             >
               Crea account <ArrowRight size={16} />
-            </button>
+            </Button>
 
             <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11.5px] leading-relaxed text-ink-faint">
               <ShieldCheck size={13} className="mt-0.5 shrink-0 text-verde" />
