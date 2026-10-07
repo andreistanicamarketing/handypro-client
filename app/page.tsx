@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import {
   Droplets, Zap, BrickWall, Hammer, Leaf, PaintRoller, Wind, KeyRound,
-  ShieldCheck, CalendarCheck, Search as SearchIcon, Star, ArrowRight,
+  ShieldCheck, CalendarCheck, Search as SearchIcon, Star, ArrowRight, Bell,
 } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
 import { Wordmark } from '@/components/layout/Navbar';
@@ -34,19 +34,29 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* alone caldo decorativo — a tutta larghezza (non tagliato dal contenitore),
+          clip su wrapper dedicato per non tagliare i dropdown della searchbar */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[600px] overflow-hidden md:top-[72px]">
+        {/* desktop: interamente sotto la navbar, altrimenti il suo sfondo lo taglia di netto */}
+        <div className="absolute -right-20 -top-[60px] h-[260px] w-[260px] rounded-full bg-ember/15 blur-[64px] md:-right-24 md:top-16 md:h-96 md:w-96 md:blur-3xl" />
+      </div>
       <div
-        className="relative mx-auto flex max-w-shell flex-col gap-7 px-5 pb-12 pt-[calc(8px+var(--safe-top))] md:gap-14 md:px-8 md:pt-[calc(72px+56px)] lg:px-24"
+        className="relative mx-auto flex max-w-shell flex-col gap-7 px-5 pb-12 pt-[calc(8px+var(--safe-top))] md:gap-14 md:px-8 md:pt-[calc(72px+56px)]"
       >
-        {/* alone caldo decorativo — clip su wrapper dedicato per non tagliare i dropdown della searchbar */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -right-20 -top-[60px] h-[260px] w-[260px] rounded-full bg-ember/15 blur-[64px] md:-top-[120px] md:h-[520px] md:w-[520px]" />
-        </div>
 
         {/* ── Header mobile (su desktop c'è la navbar) ── */}
-        <div className="relative flex h-10 items-center md:hidden">
+        <div className="relative flex h-10 items-center justify-between md:hidden">
           <Link href="/" aria-label="Handy Pro — home">
             <Wordmark className="h-[22px] w-auto text-ink" />
           </Link>
+          {/* TODO: notifiche (da implementare) — il pallino ember segnalerà le non lette */}
+          <button
+            type="button"
+            aria-label="Notifiche"
+            className="pressable flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink"
+          >
+            <Bell size={18} aria-hidden />
+          </button>
         </div>
 
         {/* ── Hero ── */}
@@ -154,7 +164,7 @@ export default async function HomePage() {
 
       <div className="hidden md:block">
       {/* ── Come funziona ────────────────────────────────────────────── */}
-      <section className="mx-auto mt-16 max-w-content px-5 md:mt-28 md:px-8">
+      <section className="mx-auto mt-16 max-w-shell px-5 md:mt-28 md:px-8">
         <h2 className="mb-8 text-[22px] font-extrabold tracking-tight text-ink md:mb-12 md:text-center md:text-3xl">
           Come <em className="font-accent text-ember-deep">funziona</em>
         </h2>
@@ -201,7 +211,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── CTA professionisti ──────────────────────────────── */}
-      <section className="mx-auto mt-16 max-w-content px-5 pb-16 md:mt-28 md:px-8 md:pb-24">
+      <section className="mx-auto mt-16 max-w-shell px-5 pb-16 md:mt-28 md:px-8 md:pb-24">
         <div className="overflow-hidden rounded-sheet bg-ink-gradient p-7 text-white md:p-12">
           <div className="max-w-md">
             <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.12em] text-white/50">

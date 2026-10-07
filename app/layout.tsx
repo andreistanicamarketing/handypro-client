@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // iOS ingrandisce la pagina al focus degli input <16px (la ricerca usa 14–15px)
+  maximumScale: 1,
   viewportFit: 'cover',
   themeColor: '#FAF6F0',
 };
@@ -35,8 +37,8 @@ export default function RootLayout({
       <body className="bg-cream text-ink">
         <Providers>
           <Navbar />
-          <main>{children}</main>
-          {/* Il footer chiude ogni pagina: è lui a riservare lo spazio alla tab bar mobile */}
+          {/* pb-bottom-nav riserva spazio alla tab bar flottante su mobile */}
+          <main className="pb-bottom-nav md:pb-0">{children}</main>
           <Footer />
           <BottomNav />
         </Providers>

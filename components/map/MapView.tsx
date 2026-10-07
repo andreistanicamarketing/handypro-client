@@ -19,6 +19,9 @@ interface MapViewProps {
   highlightedId?: string | null;
   /** Tap su un pin */
   onSelect?: (id: string) => void;
+  /** Px coperti da overlay sopra/sotto la mappa: alla selezione il pin evidenziato
+   *  viene portato nella zona libera (es. bottom sheet su mobile). */
+  keepVisible?: { top: number; bottom: number };
   /** Cambia valore per forzare map.invalidateSize() — utile quando il container
    *  passa da display:none a visibile (mobile overlay). */
   forceResize?: boolean;
@@ -28,7 +31,7 @@ const MapViewInner = dynamic(
   async () => {
     const L = (await import('leaflet')).default;
     const { MapContainer, TileLayer, Marker, useMap } = await import('react-leaflet');
-    const { useEffect } = await import('react');
+    const { useEffect, useRef } = await import('react');
 
     // Goccia = quadrato con un angolo vivo, ruotato di -45° → la punta guarda in basso.
     function makePin(highlighted: boolean) {
@@ -62,6 +65,31 @@ const MapViewInner = dynamic(
       return null;
     }
 
+    /** Porta il pin selezionato fuori dagli overlay (solo al cambio di selezione) */
+    function KeepVisible({
+      markers,
+      id,
+      area,
+    }: {
+      markers: MapMarker[];
+      id: string | null;
+      area?: { top: number; bottom: number };
+    }) {
+      const map = useMap();
+      const latest = useRef({ markers, area });
+      latest.current = { markers, area };
+      useEffect(() => {
+        const { markers, area } = latest.current;
+        const m = markers.find((x) => x.id === id);
+        if (!area || !m) return;
+        map.panInside([m.lat, m.lon], {
+          paddingTopLeft: [32, area.top],
+          paddingBottomRight: [32, area.bottom],
+        });
+      }, [map, id]);
+      return null;
+    }
+
     /** Adatta i bounds quando cambiano i marker */
     function FitBounds({ markers }: { markers: MapMarker[] }) {
       const map = useMap();
@@ -84,6 +112,7 @@ const MapViewInner = dynamic(
       height = '100%',
       highlightedId = null,
       onSelect,
+      keepVisible,
       forceResize,
     }: MapViewProps) {
       return (
@@ -100,6 +129,7 @@ const MapViewInner = dynamic(
           />
           <ResizeWatcher trigger={forceResize} />
           <FitBounds markers={markers} />
+          <KeepVisible markers={markers} id={highlightedId} area={keepVisible} />
           {markers.map((marker) => (
             <Marker
               key={marker.id}

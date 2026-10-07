@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronDown, Map as MapIcon } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Map as MapIcon, SlidersHorizontal } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
 import ProResultCard from '@/components/search/ProResultCard';
 import MapView from '@/components/map/MapView';
@@ -250,7 +250,17 @@ export default function CercaClient() {
             <SearchBar variant="compact" initialCategory={resolvedCategory} initialLocation={zona} />
           </div>
         </div>
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 scrollbar-hide">{chips()}</div>
+        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 scrollbar-hide">
+          {/* TODO: apre il pannello filtri (da implementare) */}
+          <button
+            type="button"
+            className="pressable flex h-[34px] shrink-0 items-center gap-1.5 rounded-pill border border-ink/15 bg-white px-3 text-[13px] font-semibold text-ink"
+          >
+            <SlidersHorizontal size={14} aria-hidden />
+            Filtri
+          </button>
+          {chips()}
+        </div>
       </div>
 
       <div className="md:grid md:h-[calc(100dvh-72px)] md:grid-cols-2 lg:grid-cols-[640px_minmax(0,1fr)]">
@@ -309,8 +319,10 @@ export default function CercaClient() {
               highlightedId={highlightedId}
               onSelect={(id) => {
                 setHighlightedId(id);
-                setSheetH((h) => (h > 450 ? SNAPS[0] : h));
+                // la lista si allarga per mostrare il pro scelto (in cima, evidenziato)
+                setSheetH((h) => Math.max(h, SNAPS[1]));
               }}
+              keepVisible={{ top: 140, bottom: sheetH + 24 }}
               height="100%"
               forceResize={mapOpen}
             />
