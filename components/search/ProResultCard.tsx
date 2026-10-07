@@ -48,11 +48,7 @@ export function ProInitialsAvatar({
 }
 
 /** "Oggi" / "Domani" / "Sab" */
-function dayLabel(date: Date): string {
-  const long = formatDayLong(date);
-  const short = long.split(' ')[0];
-  return short.charAt(0).toUpperCase() + short.slice(1);
-}
+const dayLabel = (date: Date) => formatDayLong(date).split(' ')[0];
 
 export default function ProResultCard({ pro, days, distanceKm, isHighlighted, onHover }: ProResultCardProps) {
   const slots = days

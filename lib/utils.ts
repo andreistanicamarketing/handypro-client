@@ -54,7 +54,8 @@ export function formatDayLong(date: Date): string {
   const diff = Math.round((date.getTime() - today.getTime()) / 86400000);
   if (diff === 0) return 'Oggi';
   if (diff === 1) return 'Domani';
-  return `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
+  const day = DAY_NAMES[date.getDay()];
+  return `${day.charAt(0).toUpperCase()}${day.slice(1)} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
 }
 
 /** "oggi", "3 giorni fa", "un mese fa", "4 mesi fa" — per le recensioni. */
