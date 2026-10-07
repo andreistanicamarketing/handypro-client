@@ -57,22 +57,13 @@ export default function BottomNav() {
           icon: Briefcase,
           match: () => false,
         },
-    // --- Tab 4: profilo / accedi ---
-    proProfilePath
-      ? {
-          // Professionista loggato → proprio profilo pubblico
-          href: proProfilePath,
-          label: 'Profilo',
-          icon: UserRound,
-          match: (p) => p === proProfilePath,
-        }
-      : {
-          // Cliente loggato o non autenticato → pagina accesso/profilo
-          href: '/registrati',
-          label: session ? 'Profilo' : 'Accedi',
-          icon: UserRound,
-          match: (p) => p.startsWith('/registrati'),
-        },
+    // --- Tab 4: account (accedi, oppure profilo con logout) — per tutti i ruoli ---
+    {
+      href: '/registrati',
+      label: session ? 'Profilo' : 'Accedi',
+      icon: UserRound,
+      match: (p) => p.startsWith('/registrati'),
+    },
   ];
 
   // Sul profilo di un altro pro la CTA "Prenota" sticky prende il posto della tab bar
