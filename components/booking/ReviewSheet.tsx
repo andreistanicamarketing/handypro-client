@@ -117,7 +117,7 @@ export default function ReviewSheet({
             <>
               <p className="mb-3 flex items-start gap-2 rounded-card bg-verde-soft/60 p-3 text-[12.5px] leading-relaxed text-verde">
                 <BadgeCheck size={15} className="mt-0.5 shrink-0" />
-                Recensione verificata: solo tu, che hai completato questo lavoro, puoi lasciarla.
+                La tua recensione sarà verificata: è collegata a un lavoro prenotato e completato su Handy Pro.
               </p>
 
               {/* stelle */}

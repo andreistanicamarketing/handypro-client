@@ -23,12 +23,8 @@ export const revalidate = 300;
 
 export default async function HomePage() {
   let topPros: Pro[] = [];
-  let totalPros = 0;
-  let totalReviews = 0;
   try {
-    const { pros, total } = await searchPros({});
-    totalPros = total;
-    totalReviews = pros.reduce((acc, p) => acc + p.reviewCount, 0);
+    const { pros } = await searchPros({});
     topPros = [...pros].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 6);
   } catch {
     // backend giù: la home renderizza senza sezione "I più richiesti"
@@ -53,8 +49,8 @@ export default async function HomePage() {
             a due passi da casa.
           </h1>
           <p className="mb-7 mx-auto max-w-md text-[15.5px] leading-relaxed text-ink-mute md:max-w-xl md:text-lg">
-            Idraulici, elettricisti, falegnami e altri professionisti della tua
-            zona. Guarda le disponibilità e prenota in un minuto.
+            Idraulici, elettricisti, falegnami e altri professionisti vicino a
+            te. Scegli un orario libero e prenota in pochi tap.
           </p>
 
           <div className="flex justify-center">
@@ -63,7 +59,7 @@ export default async function HomePage() {
 
           {/* ricerche rapide */}
           <div className="mt-5 flex items-center justify-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <span className="shrink-0 text-[13px] font-medium text-ink-faint">Frequenti:</span>
+            <span className="shrink-0 text-[13px] font-medium text-ink-faint">Prova con:</span>
             {CATEGORIES.slice(0, 5).map((c) => (
               <Link
                 key={c.slug}
@@ -82,9 +78,9 @@ export default async function HomePage() {
         <div className="mb-5 flex items-end justify-between px-5 md:px-0">
           <div>
             <h2 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
-              Di cosa hai <em className="font-accent text-ember-deep">bisogno</em>?
+              Tutte le <em className="font-accent text-ember-deep">categorie</em>
             </h2>
-            <p className="mt-1 text-[14px] text-ink-mute">Scegli una categoria per iniziare.</p>
+            <p className="mt-1 text-[14px] text-ink-mute">Dai guasti urgenti alle ristrutturazioni.</p>
           </div>
         </div>
 
@@ -119,10 +115,10 @@ export default async function HomePage() {
           <div className="mb-5 flex items-end justify-between px-5 md:px-0">
             <div>
               <h2 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
-                I più <em className="font-accent text-ember-deep">richiesti</em>
+                I più <em className="font-accent text-ember-deep">apprezzati</em>
               </h2>
               <p className="mt-1 text-[14px] text-ink-mute">
-                I professionisti meglio recensiti della tua zona.
+                I professionisti con le recensioni migliori.
               </p>
             </div>
             <Link
@@ -209,18 +205,18 @@ export default async function HomePage() {
           {[
             {
               icon: SearchIcon,
-              title: 'Cerca nella tua zona',
-              text: 'Filtra per categoria e città: vedi subito chi lavora vicino a te, con prezzi chiari.',
+              title: 'Cerca vicino a te',
+              text: 'Scegli categoria e città: vedi chi lavora nella tua zona e quanto chiede.',
             },
             {
               icon: CalendarCheck,
               title: 'Prenota in un minuto',
-              text: 'Scegli giorno e orario tra le disponibilità reali, senza telefonate a vuoto.',
+              text: 'Scegli un orario libero e invia la richiesta: il professionista te la conferma, senza telefonate a vuoto.',
             },
             {
               icon: ShieldCheck,
               title: 'Fidati delle recensioni',
-              text: 'Recensisce solo chi ha completato un lavoro confermato. Niente recensioni finte.',
+              text: 'Può recensire solo chi ha prenotato un lavoro qui, a lavoro concluso. Niente recensioni finte.',
             },
           ].map((step, i) => (
             <li key={step.title} className="relative flex gap-4 md:flex-col md:items-center md:text-center">
@@ -241,41 +237,26 @@ export default async function HomePage() {
         </ol>
       </section>
 
-      {/* ── CTA professionisti + numeri ──────────────────────────────── */}
+      {/* ── CTA professionisti ──────────────────────────────── */}
       <section className="mx-auto mt-16 max-w-content px-5 pb-16 md:mt-28 md:px-8 md:pb-24">
         <div className="overflow-hidden rounded-sheet bg-ink-gradient p-7 text-white md:p-12">
-          <div className="md:flex md:items-center md:justify-between md:gap-12">
-            <div className="max-w-md">
-              <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.12em] text-white/50">
-                Sei un professionista?
-              </p>
-              <h2 className="mb-3 text-[26px] font-extrabold leading-tight tracking-tight md:text-4xl">
-                Fatti trovare da chi ti sta <em className="font-accent text-ember">cercando</em>.
-              </h2>
-              <p className="mb-6 text-[14.5px] leading-relaxed text-white/70 md:text-base">
-                Profilo pubblico, agenda online e recensioni verificate. Gratis
-                per iniziare, senza vincoli.
-              </p>
-              <Link
-                href="/registrati?tipo=professionista"
-                className="pressable inline-flex h-12 items-center gap-2 rounded-2xl bg-ember-gradient px-6 text-[15px] font-bold text-white shadow-lift"
-              >
-                Crea il tuo profilo <ArrowRight size={17} />
-              </Link>
-            </div>
-
-            <div className="mt-8 grid grid-cols-3 gap-3 md:mt-0 md:w-[320px] md:shrink-0 md:grid-cols-1">
-              {[
-                { value: `${totalPros}+`, label: 'Professionisti' },
-                { value: `${totalReviews}+`, label: 'Recensioni verificate' },
-                { value: '4.7 ★', label: 'Valutazione media' },
-              ].map((s) => (
-                <div key={s.label} className="rounded-card bg-white/[0.07] p-3.5 md:p-4">
-                  <p className="text-[20px] font-extrabold md:text-2xl">{s.value}</p>
-                  <p className="text-[11.5px] text-white/55 md:text-[13px]">{s.label}</p>
-                </div>
-              ))}
-            </div>
+          <div className="max-w-md">
+            <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.12em] text-white/50">
+              Sei un professionista?
+            </p>
+            <h2 className="mb-3 text-[26px] font-extrabold leading-tight tracking-tight md:text-4xl">
+              Fatti trovare da chi ti sta <em className="font-accent text-ember">cercando</em>.
+            </h2>
+            <p className="mb-6 text-[14.5px] leading-relaxed text-white/70 md:text-base">
+              Profilo pubblico, richieste dei clienti e recensioni verificate.
+              Iscrizione gratuita, senza vincoli.
+            </p>
+            <Link
+              href="/registrati?tipo=professionista"
+              className="pressable inline-flex h-12 items-center gap-2 rounded-2xl bg-ember-gradient px-6 text-[15px] font-bold text-white shadow-lift"
+            >
+              Crea il tuo profilo <ArrowRight size={17} />
+            </Link>
           </div>
         </div>
       </section>
