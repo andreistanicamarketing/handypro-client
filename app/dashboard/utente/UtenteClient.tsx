@@ -22,8 +22,8 @@ type Tab = 'prossimi' | 'completati';
 
 const STATUS_META = {
   pending: { label: 'In attesa di conferma', icon: Hourglass, cls: 'bg-ember-soft text-ember-deep' },
-  confirmed: { label: 'Confermato', icon: CheckCircle2, cls: 'bg-verde-soft text-verde' },
-  completed: { label: 'Completato', icon: CheckCircle2, cls: 'bg-sand text-ink-mute' },
+  confirmed: { label: 'Confermata', icon: CheckCircle2, cls: 'bg-verde-soft text-verde' },
+  completed: { label: 'Completata', icon: CheckCircle2, cls: 'bg-sand text-ink-mute' },
   cancelled: { label: 'Annullata', icon: X, cls: 'bg-sand text-ink-faint' },
 } as const;
 
@@ -111,7 +111,7 @@ export default function UtenteClient() {
             className="pressable hidden h-11 items-center gap-1.5 rounded-pill bg-ink px-4 text-[13.5px] font-bold text-white md:inline-flex"
           >
             <Plus size={15} />
-            Nuova richiesta
+            Nuova prenotazione
           </Link>
         </div>
 
@@ -120,7 +120,7 @@ export default function UtenteClient() {
           {(
             [
               { id: 'prossimi', label: `In programma (${upcoming.length})` },
-              { id: 'completati', label: `Completati (${completed.length})` },
+              { id: 'completati', label: `Storico (${completed.length})` },
             ] as { id: Tab; label: string }[]
           ).map((t) => (
             <button
@@ -163,12 +163,12 @@ export default function UtenteClient() {
               <CalendarDays size={24} />
             </span>
             <p className="mb-1 font-bold text-ink">
-              {tab === 'prossimi' ? 'Nessun lavoro in programma' : 'Nessun lavoro completato'}
+              {tab === 'prossimi' ? 'Nessun lavoro in programma' : 'Nessun lavoro nello storico'}
             </p>
             <p className="mx-auto mb-5 max-w-[260px] text-[14px] text-ink-mute">
               {tab === 'prossimi'
                 ? 'Trova un professionista e prenota il tuo primo intervento.'
-                : 'I lavori conclusi compariranno qui, pronti da recensire.'}
+                : 'Qui trovi i lavori conclusi e quelli annullati. Quelli conclusi puoi recensirli.'}
             </p>
             {tab === 'prossimi' && (
               <Link
@@ -204,7 +204,7 @@ export default function UtenteClient() {
                     {b.status === 'completed' && b.reviewed && (
                       <span className="inline-flex items-center gap-1 text-[11.5px] font-bold text-verde">
                         <BadgeCheck size={13} />
-                        Recensito
+                        Recensione lasciata
                       </span>
                     )}
                   </div>
@@ -298,7 +298,7 @@ export default function UtenteClient() {
           className="pressable mt-5 flex h-12 items-center justify-center gap-2 rounded-2xl border border-line bg-white text-[14.5px] font-bold text-ink shadow-chip md:hidden"
         >
           <Plus size={16} />
-          Nuova richiesta
+          Nuova prenotazione
         </Link>
       </div>
 
@@ -309,7 +309,7 @@ export default function UtenteClient() {
         jobLabel={reviewFor?.service ?? ''}
         onClose={() => setReviewFor(null)}
         onSubmit={async (rating, text) => {
-          if (!reviewFor || !token) return 'Sessione scaduta, riaccedi.';
+          if (!reviewFor || !token) return 'Sessione scaduta: accedi di nuovo.';
           try {
             await createReview(token, { bookingId: reviewFor.id, rating, text });
             setBookings((prev) => prev && prev.map((b) => (b.id === reviewFor.id ? { ...b, reviewed: true } : b)));

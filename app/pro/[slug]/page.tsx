@@ -22,7 +22,12 @@ export async function generateMetadata({ params }: ProProfilePageProps): Promise
   if (!pro) return { title: 'Professionista non trovato — Handy Pro' };
   return {
     title: `${pro.name} — ${pro.categoryLabel} a ${pro.city} | Handy Pro`,
-    description: `${pro.specialization}. ${pro.reviewCount} recensioni verificate. Prenota online.`,
+    description: [
+      pro.specialization,
+      pro.reviewCount > 0 &&
+        `${pro.reviewCount} ${pro.reviewCount === 1 ? 'recensione verificata' : 'recensioni verificate'}`,
+      'Prenota online.',
+    ].filter(Boolean).join('. '),
   };
 }
 

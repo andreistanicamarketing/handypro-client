@@ -5,6 +5,7 @@
 // registrazione con scelta ruolo. Redirect all'area corretta.
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   UserRound, Wrench, LogIn, Eye, EyeOff, ArrowRight, ShieldCheck, LogOut,
@@ -57,7 +58,7 @@ export default function AuthClient() {
   async function quickLogin(demoEmail: string) {
     const s = await login(demoEmail, 'demo123');
     if (!s) {
-      setError('Login demo non riuscito: il backend è avviato con il seed?');
+      setError('Accesso demo non riuscito. Riprova tra poco.');
       return;
     }
     router.push(areaForRole(s.role));
@@ -146,8 +147,10 @@ export default function AuthClient() {
         </h1>
         <p className="mb-6 text-center text-[14px] text-ink-mute">
           {tab === 'accedi'
-            ? 'Accedi per gestire lavori e prenotazioni.'
-            : 'Gratis per i clienti, sempre.'}
+            ? 'Accedi per vedere prenotazioni e messaggi.'
+            : role === 'professionista'
+              ? 'Crea il tuo profilo gratis e ricevi richieste dalla tua zona.'
+              : 'Per i clienti è gratis, sempre.'}
         </p>
 
         {/* tabs */}
@@ -217,12 +220,12 @@ export default function AuthClient() {
                   </button>
                 </div>
               </div>
-              <button
-                type="button"
-                className="mb-3 text-[12.5px] font-semibold text-ink-mute hover:text-ink"
+              <a
+                href="mailto:info@handypro.it?subject=Recupero%20password"
+                className="mb-3 inline-block text-[12.5px] font-semibold text-ink-mute hover:text-ink"
               >
                 Password dimenticata?
-              </button>
+              </a>
 
               {error && (
                 <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-[13px] font-semibold text-red-500">
@@ -417,7 +420,12 @@ export default function AuthClient() {
 
             <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11.5px] leading-relaxed text-ink-faint">
               <ShieldCheck size={13} className="mt-0.5 shrink-0 text-verde" />
-              Registrandoti accetti i Termini e la Privacy Policy.
+              <span>
+                Registrandoti accetti i{' '}
+                <Link href="/termini" className="underline hover:text-ink">Termini di servizio</Link>{' '}
+                e confermi di aver letto l&rsquo;
+                <Link href="/privacy" className="underline hover:text-ink">Informativa privacy</Link>.
+              </span>
             </p>
           </form>
         )}

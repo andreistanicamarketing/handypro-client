@@ -85,7 +85,9 @@ export default function ProProfileClient({
                     {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
                   </p>
                   <p className="text-[11.5px] font-medium text-ink-faint">
-                    {pro.rating === null ? 'Nessuna recensione' : `${pro.reviewCount} recensioni`}
+                    {pro.rating === null
+                      ? 'Nessuna recensione'
+                      : `${pro.reviewCount} ${pro.reviewCount === 1 ? 'recensione' : 'recensioni'}`}
                   </p>
                 </div>
                 <div className="rounded-card bg-cream p-3 text-center">
@@ -151,12 +153,12 @@ export default function ProProfileClient({
 
               <p className="mb-4 flex items-start gap-2 rounded-card bg-verde-soft/60 p-3 text-[12.5px] leading-relaxed text-verde">
                 <BadgeCheck size={15} className="mt-0.5 shrink-0" />
-                Solo chi ha completato un lavoro confermato può lasciare una recensione.
+                Può recensire solo chi ha prenotato un lavoro qui, a lavoro concluso.
               </p>
 
               {reviews.length === 0 ? (
                 <p className="text-[14px] text-ink-mute">
-                  Nessuna recensione verificata ancora.
+                  Ancora nessuna recensione.
                 </p>
               ) : (
                 <ul className="space-y-4">
@@ -217,7 +219,7 @@ export default function ProProfileClient({
                 Disponibilità
               </h2>
               <p className="mb-3 text-[12.5px] text-ink-mute">
-                Tocca un orario per prenotare subito.
+                Scegli un orario: il professionista confermerà la richiesta.
               </p>
               <AvailabilityGrid proSlug={pro.slug} visibleDays={4} />
               <button

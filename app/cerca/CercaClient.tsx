@@ -143,9 +143,9 @@ export default function CercaClient() {
             ) : null}
           </h1>
           <p className="mb-4 text-[13px] font-medium text-ink-mute">
-            {results === null ? '…' : results.length}{' '}
-            {results?.length === 1 ? 'professionista disponibile' : 'professionisti disponibili'} ·
-            prenotazione online
+            {results === null
+              ? !error && 'Ricerca in corso…'
+              : `${results.length} ${results.length === 1 ? 'professionista' : 'professionisti'}`}
           </p>
 
           {error ? (

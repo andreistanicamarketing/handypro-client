@@ -7,7 +7,7 @@ const COLUMNS = [
     links: [
       { label: 'Come funziona', href: '/come-funziona' },
       { label: 'Chi siamo', href: '/chi-siamo' },
-      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Privacy', href: '/privacy' },
       { label: 'Termini di servizio', href: '/termini' },
     ],
   },
@@ -15,9 +15,9 @@ const COLUMNS = [
     title: 'Esplora',
     links: [
       { label: 'Cerca professionisti', href: '/cerca' },
-      { label: 'Registrati come privato', href: '/registrati?tipo=privato' },
+      { label: 'Registrati come cliente', href: '/registrati?tipo=privato' },
       { label: 'Registrati come professionista', href: '/registrati?tipo=professionista' },
-      { label: 'Abbonamenti per professionisti', href: '/abbonamenti' },
+      { label: 'Abbonamenti', href: '/abbonamenti' },
     ],
   },
   {
@@ -37,8 +37,7 @@ export default function Footer() {
         <div className="mb-10">
           <Wordmark className="h-7 w-auto text-white" />
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/55">
-            Il professionista giusto, a portata di mano. Recensioni verificate
-            da lavori reali.
+            Il tuo professionista, a portata di mano.
           </p>
         </div>
 

@@ -339,7 +339,7 @@ export default function BookingSheet({
                     id="bk-note"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Es. la caldaia perde acqua dal tubo di scarico…"
+                    placeholder="Es. cosa non funziona, da quando, se è urgente…"
                     rows={3}
                     className="w-full resize-none rounded-xl border border-line bg-white p-3.5 text-[15px] font-medium text-ink outline-none placeholder:text-ink-faint focus:border-ember"
                   />
@@ -397,10 +397,11 @@ export default function BookingSheet({
                 Richiesta inviata!
               </h3>
               <p className="mx-auto mb-5 max-w-[280px] text-[14px] leading-relaxed text-ink-mute">
-                {pro.name} riceverà la tua richiesta per{' '}
-                <strong className="text-ink">{service?.name}</strong>{' '}
+                Hai chiesto a {pro.name} un intervento per{' '}
+                <strong className="text-ink">{service?.name}</strong>,{' '}
                 {selectedDay ? formatDayLong(selectedDay.date).toLowerCase() : ''} alle{' '}
-                <strong className="text-ink">{slot}</strong> e ti confermerà al più presto.
+                <strong className="text-ink">{slot}</strong>. Trovi la conferma in{' '}
+                <em>I miei lavori</em>.
               </p>
               <p className="mx-auto mb-6 max-w-[280px] rounded-card bg-cream p-3 text-[12.5px] leading-relaxed text-ink-mute">
                 Al termine del lavoro confermato potrai lasciare una recensione verificata.

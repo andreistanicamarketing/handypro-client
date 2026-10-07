@@ -173,13 +173,13 @@ export default function ProDashboardClient() {
           </div>
           <div className="rounded-card border border-line bg-white p-3.5 shadow-chip">
             <p className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">
-              <Star size={12} /> Rating
+              <Star size={12} /> Voto medio
             </p>
             <p className="mt-1 flex items-center gap-1 text-[20px] font-extrabold text-ink">
               {pro?.rating == null ? '—' : pro.rating.toFixed(1)}
               <Star size={14} className="fill-ember text-ember" />
             </p>
-            <p className="text-[11.5px] font-medium text-ink-faint">{pro?.reviewCount ?? 0} recensioni</p>
+            <p className="text-[11.5px] font-medium text-ink-faint">{pro?.reviewCount ?? 0} {pro?.reviewCount === 1 ? 'recensione' : 'recensioni'}</p>
           </div>
         </div>
 
@@ -194,15 +194,15 @@ export default function ProDashboardClient() {
                 Passa a <em className="font-accent text-ember">Vetrina</em>
               </p>
               <p className="text-[12.5px] leading-snug text-white/65">
-                Priorità nei risultati, badge in evidenza e statistiche complete. Da 7€/mese.
+                Compari prima nei risultati e ottieni statistiche complete. In arrivo.
               </p>
             </div>
-            <button
-              type="button"
+            <Link
+              href="/abbonamenti"
               className="pressable shrink-0 rounded-pill bg-white px-4 py-2 text-[12.5px] font-bold text-ink"
             >
-              Scopri
-            </button>
+              Scopri di più
+            </Link>
           </div>
         </div>
 
@@ -268,8 +268,7 @@ export default function ProDashboardClient() {
                   </span>
                   <p className="mb-1 font-bold text-ink">Nessuna richiesta in attesa</p>
                   <p className="mx-auto max-w-[280px] text-[14px] text-ink-mute">
-                    Le nuove richieste dei clienti arrivano qui. Rispondere in fretta migliora la tua
-                    visibilità.
+                    Quando un cliente ti chiede un intervento, la richiesta compare qui.
                   </p>
                 </div>
               ) : (
@@ -400,7 +399,7 @@ export default function ProDashboardClient() {
                                 className="pressable inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-verde px-3 text-[12.5px] font-bold text-white"
                               >
                                 <Check size={14} strokeWidth={3} />
-                                Segna completata
+                                Segna come completata
                               </button>
                             )}
                           </li>

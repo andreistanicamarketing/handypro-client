@@ -30,19 +30,29 @@ export async function apiFetch<T>(
     Accept: 'application/json',
   };
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options?.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options?.headers,
+      },
+    });
+  } catch {
+    // "Failed to fetch" del browser: rete giù o backend irraggiungibile
+    throw new ApiError(0, 'Connessione non riuscita. Controlla la rete e riprova.');
+  }
 
   if (!response.ok) {
-    let message = `HTTP ${response.status}`;
+    // Solo body.message (italiano, dal nostro middleware): body.title è l'inglese di ASP.NET
+    let message =
+      response.status === 400
+        ? 'Controlla i dati inseriti e riprova.'
+        : 'Si è verificato un errore. Riprova tra poco.';
     try {
       const body = await response.json();
-      message = body?.message ?? body?.title ?? message;
+      message = body?.message ?? message;
     } catch {
       // ignore parse error
     }

@@ -218,7 +218,7 @@ export default function ChatSheet({
             </div>
           ) : messages.length === 0 ? (
             <p className="pt-8 text-center text-[13.5px] text-ink-faint">
-              Nessun messaggio ancora. Scrivi il primo!
+              Ancora nessun messaggio. Scrivi tu per primo.
             </p>
           ) : (
             <ul className="space-y-2.5">
