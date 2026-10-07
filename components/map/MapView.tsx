@@ -2,7 +2,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import 'leaflet/dist/leaflet.css';
 
 export interface MapMarker {
   id: string;
@@ -22,9 +21,8 @@ interface MapViewProps {
   /** Px coperti da overlay sopra/sotto la mappa: alla selezione il pin evidenziato
    *  viene portato nella zona libera (es. bottom sheet su mobile). */
   keepVisible?: { top: number; bottom: number };
-  /** Cambia valore per forzare map.invalidateSize() — utile quando il container
-   *  passa da display:none a visibile (mobile overlay). */
-  forceResize?: boolean;
+  /** false = mappa statica (niente drag/zoom), es. zona operativa nel profilo */
+  interactive?: boolean;
 }
 
 const MapViewInner = dynamic(
@@ -55,13 +53,15 @@ const MapViewInner = dynamic(
       });
     }
 
-    /** Chiama invalidateSize() quando il container diventa visibile (es. overlay mobile) */
-    function ResizeWatcher({ trigger }: { trigger?: boolean }) {
+    /** Ricalcola le dimensioni a ogni resize del container (anche da display:none a visibile):
+     *  senza, Leaflet carica le tile solo per la dimensione letta all'avvio. */
+    function ResizeWatcher() {
       const map = useMap();
       useEffect(() => {
-        const id = setTimeout(() => map.invalidateSize(), 150);
-        return () => clearTimeout(id);
-      }, [map, trigger]);
+        const ro = new ResizeObserver(() => map.invalidateSize());
+        ro.observe(map.getContainer());
+        return () => ro.disconnect();
+      }, [map]);
       return null;
     }
 
@@ -113,21 +113,27 @@ const MapViewInner = dynamic(
       highlightedId = null,
       onSelect,
       keepVisible,
-      forceResize,
+      interactive = true,
     }: MapViewProps) {
       return (
         <MapContainer
           center={center}
           zoom={zoom}
           style={{ height, width: '100%' }}
-          scrollWheelZoom={true}
+          scrollWheelZoom={interactive}
+          dragging={interactive}
+          touchZoom={interactive}
+          doubleClickZoom={interactive}
+          boxZoom={interactive}
+          keyboard={interactive}
+          zoomControl={interactive}
           className="z-0"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <ResizeWatcher trigger={forceResize} />
+          <ResizeWatcher />
           <FitBounds markers={markers} />
           <KeepVisible markers={markers} id={highlightedId} area={keepVisible} />
           {markers.map((marker) => (

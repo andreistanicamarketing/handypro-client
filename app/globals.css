@@ -112,6 +112,9 @@ a {
   background: rgba(250, 246, 240, 0.8);
   border-radius: 4px 0 0 0;
 }
+.leaflet-container .leaflet-control-attribution a {
+  color: inherit;
+}
 @media (max-width: 767px) {
   .leaflet-control-zoom {
     display: none;

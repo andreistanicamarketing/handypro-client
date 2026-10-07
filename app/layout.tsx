@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+// Leaflet qui e non in MapView: importato dal componente non veniva incluso in tutte le pagine
+import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';

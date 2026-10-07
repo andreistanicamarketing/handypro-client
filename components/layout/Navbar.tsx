@@ -59,7 +59,7 @@ export function Wordmark({ className }: { className?: string }) {
 }
 
 /** Pagine che su mobile disegnano il proprio header: lì la top bar sparisce. */
-const OWN_MOBILE_HEADER = ['/cerca'];
+const OWN_MOBILE_HEADER = ['/cerca', '/pro/'];
 
 /** Ricerca compatta nella navbar di /cerca, sincronizzata con l'URL. */
 function NavSearch() {

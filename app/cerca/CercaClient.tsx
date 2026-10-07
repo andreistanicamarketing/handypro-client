@@ -324,7 +324,6 @@ export default function CercaClient() {
               }}
               keepVisible={{ top: 140, bottom: sheetH + 24 }}
               height="100%"
-              forceResize={mapOpen}
             />
           </div>
           <div

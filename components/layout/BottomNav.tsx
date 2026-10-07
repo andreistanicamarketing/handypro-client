@@ -75,6 +75,9 @@ export default function BottomNav() {
         },
   ];
 
+  // Sul profilo di un altro pro la CTA "Prenota" sticky prende il posto della tab bar
+  if (pathname.startsWith('/pro/') && pathname !== proProfilePath) return null;
+
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3.5 md:hidden"

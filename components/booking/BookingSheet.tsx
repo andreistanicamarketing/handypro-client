@@ -10,8 +10,9 @@ import {
 } from 'lucide-react';
 import { getAvailability, createBooking, type Pro, type Service, type DayAvailability } from '@/lib/data';
 import { useSession } from '@/lib/auth-mock';
-import { cn, formatDayLong, formatDayShort, toDateKey } from '@/lib/utils';
+import { cn, formatDayLong, toDateKey } from '@/lib/utils';
 import Sheet from '@/components/ui/Sheet';
+import SlotPicker, { slotLabel } from '@/components/booking/SlotPicker';
 import Button, { IconButton } from '@/components/ui/Button';
 
 interface BookingSheetProps {
@@ -25,7 +26,8 @@ interface BookingSheetProps {
 
 type Step = 1 | 2 | 3 | 4;
 
-const STEP_LABELS = ['Servizio', 'Data e ora', 'Riepilogo'];
+const STEP_LABELS = ['Servizio', 'Orario', 'Riepilogo'];
+const STEP_TITLES = ['Cosa ti serve?', 'Quando ti serve?', 'Tutto giusto?'];
 
 export default function BookingSheet({
   pro,
@@ -124,41 +126,46 @@ export default function BookingSheet({
 
   // Overlay: flex items-end mobile (bottom sheet) → flex items-center justify-center sm+ (dialog centrato)
   return (
-    <Sheet open={open} onClose={onClose} label="Prenota un intervento" className="sm:max-h-[88vh] sm:w-[560px] md:w-[740px]">
+    <Sheet open={open} onClose={onClose} label="Prenota un intervento" className="h-[650px] sm:h-auto sm:max-h-[88vh] sm:w-[560px]">
       {/* header */}
-      <div className="flex items-center gap-2 px-5 pb-3 pt-3 sm:pt-5">
-        {step > 1 && step < 4 && (
+      <div className="flex items-start gap-2 px-5 pb-3.5 pt-3.5 sm:pt-5">
+        {step === 3 && (
           <IconButton
-            onClick={() => setStep((s) => Math.max(1, s - 1) as Step)}
+            onClick={() => setStep(2)}
             aria-label="Indietro"
             className="-ml-1.5"
           >
             <ChevronLeft size={19} />
           </IconButton>
         )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[15.5px] font-bold text-ink">
-            {step === 4 ? pro.name : `Prenota con ${pro.name}`}
+        <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+          <p className="truncate text-[18px] font-extrabold tracking-[-.015em] text-ink">
+            {step === 4 ? pro.name : STEP_TITLES[step - 1]}
           </p>
           {step < 4 && (
-            <p className="text-[12px] font-medium text-ink-faint">
+            <p className="text-[13px] text-ink-faint">
               Passo {step} di 3 · {STEP_LABELS[step - 1]}
             </p>
           )}
         </div>
-        <IconButton onClick={onClose} aria-label="Chiudi">
-          <X size={18} />
-        </IconButton>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Chiudi"
+          className="pressable flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand text-ink hover:bg-sand-deep"
+        >
+          <X size={17} />
+        </button>
       </div>
 
       {/* progress */}
       {step < 4 && (
-        <div className="mx-5 mb-1 flex gap-1.5" aria-hidden>
+        <div className="mx-5 mb-1 grid grid-cols-3 gap-1.5" aria-hidden>
           {[1, 2, 3].map((s) => (
             <span
               key={s}
               className={cn(
-                'h-1 flex-1 rounded-pill transition-colors',
+                'h-1 rounded transition-colors',
                 s <= step ? 'bg-ember' : 'bg-sand'
               )}
             />
@@ -167,7 +174,7 @@ export default function BookingSheet({
       )}
 
       {/* contenuto */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-[18px]">
         {/* ── Step 1: servizio ── */}
         {step === 1 && (
           <div className="space-y-2.5">
@@ -210,95 +217,50 @@ export default function BookingSheet({
 
         {/* ── Step 2: data e ora ── */}
         {step === 2 && (
-          <div className="md:grid md:grid-cols-[1fr_1.4fr] md:gap-6">
-            {/* colonna sinistra: giorni */}
-            <div>
-              <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-faint">
-                Scegli il giorno
-              </p>
-              {days === null ? (
-                <div className="flex gap-2 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-[62px] w-[64px] shrink-0 animate-pulse rounded-card bg-sand/50 md:w-auto"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
-                  {days.map((d) => {
-                    const key = toDateKey(d.date);
-                    const { dayName, dayNum } = formatDayShort(d.date);
-                    const active = key === dateKey;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          setDateKey(key);
-                          setSlot(null);
-                        }}
-                        className={cn(
-                          'pressable w-[64px] shrink-0 rounded-card border py-2.5 text-center md:w-auto',
-                          active ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink'
-                        )}
-                      >
-                        <span className="block text-[12px] font-bold capitalize">{dayName}</span>
-                        <span className={cn('block text-[11px]', active ? 'text-white/70' : 'text-ink-faint')}>
-                          {dayNum}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* colonna destra: orari */}
-            <div className="mt-4 md:mt-0">
-              {days === null ? (
-                <div className="grid grid-cols-4 gap-2 md:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-10 animate-pulse rounded-xl bg-sand/50" />
-                  ))}
-                </div>
-              ) : selectedDay ? (
-                <>
-                  <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-faint">
-                    Orari per {formatDayLong(selectedDay.date).toLowerCase()}
-                  </p>
-                  <div className="grid grid-cols-4 gap-2 md:grid-cols-3">
-                    {selectedDay.slots.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setSlot(s)}
-                        className={cn(
-                          'pressable h-10 rounded-xl text-[13.5px] font-bold',
-                          slot === s ? 'bg-ember text-white' : 'bg-sand text-ink hover:bg-sand-deep'
-                        )}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="flex h-full items-center justify-center rounded-card bg-sand/40 p-6 text-center">
-                  <p className="text-[13.5px] text-ink-mute">
-                    Seleziona un giorno per vedere gli orari disponibili.
-                  </p>
-                </div>
-              )}
-            </div>
+          <div className="flex flex-col gap-[18px]">
+            {service && (
+              <div className="flex items-center gap-3 rounded-2xl bg-cream px-3 py-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ember text-white">
+                  <Wrench size={16} aria-hidden />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-[14px] font-bold text-ink">{service.name}</span>
+                  <span className="truncate text-[12.5px] text-ink-mute">
+                    {service.price} · {pro.name}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-[13px] font-bold text-ember-deep hover:text-ink"
+                >
+                  Modifica
+                </button>
+              </div>
+            )}
+            <SlotPicker
+              size="large"
+              days={days}
+              dateKey={dateKey}
+              slot={slot}
+              onDate={(k) => {
+                setDateKey(k);
+                setSlot(null);
+              }}
+              onSlot={setSlot}
+              labels={{
+                days: (selectedDay?.date ?? days?.[0]?.date ?? new Date()).toLocaleDateString('it-IT', { month: 'long' }),
+                slots: 'Orari liberi',
+              }}
+              bleed="-mx-5 px-5"
+            />
           </div>
         )}
 
         {/* ── Step 3: riepilogo ── */}
         {step === 3 && (
-          <div className="md:grid md:grid-cols-[1.2fr_1fr] md:gap-6">
-            {/* Colonna sinistra: nota */}
+          <div>
+            {/* nota */}
             <div className="space-y-3.5">
               <div>
                 <label htmlFor="bk-note" className="mb-1 block text-[13px] font-bold text-ink">
@@ -315,8 +277,8 @@ export default function BookingSheet({
               </div>
             </div>
 
-            {/* Colonna destra (desktop) / sotto il form (mobile): riepilogo */}
-            <div className="mt-3.5 md:mt-0">
+            {/* riepilogo */}
+            <div className="mt-3.5">
               <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-faint">
                 Riepilogo prenotazione
               </p>
@@ -390,7 +352,7 @@ export default function BookingSheet({
       {step < 4 && (
         <div
           className="shrink-0 border-t border-line bg-white px-5 pt-3"
-          style={{ paddingBottom: 'calc(12px + var(--safe-bottom))' }}
+          style={{ paddingBottom: 'max(20px, calc(12px + var(--safe-bottom)))' }}
         >
           {error && (
             <p role="alert" className="mb-2 rounded-xl bg-red-50 p-3 text-[13px] font-semibold text-red-500">
@@ -400,10 +362,15 @@ export default function BookingSheet({
           <Button
             onClick={next}
             disabled={!canProceed || sending}
-            className="w-full"
+            className="h-[54px] w-full text-[16px]"
           >
             {sending ? 'Invio…' : step === 3 ? (session ? 'Invia richiesta' : 'Accedi per prenotare') : 'Continua'}
           </Button>
+          {step === 2 && selectedDay && slot && (
+            <p className="mt-2 text-center text-[12px] text-ink-faint">
+              {slotLabel(selectedDay.date, slot)} · confermerà il professionista
+            </p>
+          )}
         </div>
       )}
     </Sheet>
