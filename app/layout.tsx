@@ -35,8 +35,8 @@ export default function RootLayout({
       <body className="bg-cream text-ink">
         <Providers>
           <Navbar />
-          {/* pb-bottom-nav riserva spazio alla bottom nav su mobile */}
-          <main className="pb-bottom-nav">{children}</main>
+          <main>{children}</main>
+          {/* Il footer chiude ogni pagina: è lui a riservare lo spazio alla tab bar mobile */}
           <Footer />
           <BottomNav />
         </Providers>

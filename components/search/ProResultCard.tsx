@@ -3,14 +3,15 @@
 // Card risultato "riga compatta" (~130px): tutta la card porta al profilo,
 // le pill orario portano direttamente alla prenotazione di quello slot.
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BadgeCheck, Star } from 'lucide-react';
-import { getAvailability, type Pro } from '@/lib/data';
+import type { DayAvailability, Pro } from '@/lib/data';
 import { cn, formatDayLong, formatKm, toDateKey } from '@/lib/utils';
 
 interface ProResultCardProps {
   pro: Pro;
+  /** Disponibilità del pro (undefined = in caricamento) */
+  days?: DayAvailability[];
   /** Distanza dalla zona cercata; omessa se non nota */
   distanceKm?: number | null;
   isHighlighted?: boolean;
@@ -46,26 +47,6 @@ export function ProInitialsAvatar({
   );
 }
 
-type Slot = { date: Date; time: string };
-
-/** I prossimi `n` slot liberi, dalla stessa sorgente della griglia disponibilità. */
-function useNextSlots(slug: string, n: number): Slot[] | null {
-  const [slots, setSlots] = useState<Slot[] | null>(null); // null = loading
-  useEffect(() => {
-    let alive = true;
-    getAvailability(slug, 14)
-      .then((days) => {
-        if (!alive) return;
-        setSlots(days.flatMap((d) => d.slots.map((time) => ({ date: d.date, time }))).slice(0, n));
-      })
-      .catch(() => alive && setSlots([]));
-    return () => {
-      alive = false;
-    };
-  }, [slug, n]);
-  return slots;
-}
-
 /** "Oggi" / "Domani" / "Sab" */
 function dayLabel(date: Date): string {
   const long = formatDayLong(date);
@@ -73,8 +54,10 @@ function dayLabel(date: Date): string {
   return short.charAt(0).toUpperCase() + short.slice(1);
 }
 
-export default function ProResultCard({ pro, distanceKm, isHighlighted, onHover }: ProResultCardProps) {
-  const slots = useNextSlots(pro.slug, 3);
+export default function ProResultCard({ pro, days, distanceKm, isHighlighted, onHover }: ProResultCardProps) {
+  const slots = days
+    ?.flatMap((d) => d.slots.map((time) => ({ date: d.date, time })))
+    .slice(0, 3);
   const meta = [pro.categoryLabel, pro.zona, distanceKm != null ? formatKm(distanceKm) : null]
     .filter(Boolean)
     .join(' · ');
@@ -117,7 +100,7 @@ export default function ProResultCard({ pro, distanceKm, isHighlighted, onHover 
       </div>
 
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-        {slots === null ? (
+        {slots === undefined ? (
           <span className="h-[34px] w-full animate-pulse rounded-pill bg-sand/60" aria-label="Caricamento disponibilità" />
         ) : slots.length === 0 ? (
           <span className="text-[12.5px] font-medium text-ink-faint">Nessun orario libero nei prossimi giorni</span>

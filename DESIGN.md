@@ -30,7 +30,7 @@ Fonte di verità dei token: `tailwind.config.ts`. Componenti base: `components/u
 `Come <em className="font-accent text-ember-deep">funziona</em>`.
 Titoli `font-extrabold tracking-tight` (26 / 20 / 17px), corpo 14–15px, meta 12–13px.
 
-**Layout:** `max-w-content` (1100px) per il contenuto, padding laterale `px-5 md:px-8`. Su mobile la `BottomNav` è fissa: usa `pb-bottom-nav`.
+**Layout:** `max-w-content` (1100px) per il contenuto, padding laterale `px-5 md:px-8`. Su mobile la `BottomNav` (capsula flottante) è fissa: il `Footer` riserva lo spazio con `pb-bottom-nav`; le pagine con CTA sticky gestiscono il proprio.
 
 ## Componenti (`components/ui/`)
 

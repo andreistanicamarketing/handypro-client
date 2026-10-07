@@ -16,6 +16,7 @@
   --sand: #f1eae0;
   --ember: #ff6600;
   --line: #e9e2d8;
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -83,11 +84,6 @@ a {
   /* Spazio sotto la tab bar flottante su mobile (+ safe area iOS) */
   .pb-bottom-nav {
     padding-bottom: calc(110px + var(--safe-bottom));
-  }
-  @media (min-width: 768px) {
-    .pb-bottom-nav {
-      padding-bottom: 0;
-    }
   }
 
   /* Tocco app-like: feedback al press */

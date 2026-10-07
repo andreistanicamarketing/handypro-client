@@ -33,7 +33,7 @@ const COLUMNS = [
 export default function Footer() {
   return (
     <footer className="bg-ink-gradient text-white">
-      <div className="mx-auto max-w-content px-5 pb-10 pt-14 md:px-8">
+      <div className="pb-bottom-nav mx-auto max-w-content px-5 pt-14 md:px-8 md:pb-10">
         <div className="mb-10">
           <Wordmark className="h-7 w-auto text-white" />
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/55">

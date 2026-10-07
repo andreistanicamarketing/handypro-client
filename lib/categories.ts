@@ -6,17 +6,21 @@ export interface Category {
   label: string;
   icon: string; // nome icona lucide
   description: string;
+  /** "5 idraulici" */
+  plural: string;
+  /** Etichetta per le tile strette (griglia home mobile) */
+  short?: string;
 }
 
 export const CATEGORIES: Category[] = [
-  { slug: 'idraulico', label: 'Idraulico', icon: 'Droplets', description: 'Perdite, caldaie, sanitari' },
-  { slug: 'elettricista', label: 'Elettricista', icon: 'Zap', description: 'Impianti, guasti, domotica' },
-  { slug: 'muratore', label: 'Muratore', icon: 'BrickWall', description: 'Ristrutturazioni, opere murarie' },
-  { slug: 'falegname', label: 'Falegname', icon: 'Hammer', description: 'Mobili su misura, riparazioni' },
-  { slug: 'giardiniere', label: 'Giardiniere', icon: 'Leaf', description: 'Potature, manutenzione verde' },
-  { slug: 'imbianchino', label: 'Imbianchino', icon: 'PaintRoller', description: 'Tinteggiature, cartongesso' },
-  { slug: 'climatizzazione', label: 'Climatizzazione', icon: 'Wind', description: 'Condizionatori, pompe di calore' },
-  { slug: 'fabbro', label: 'Fabbro', icon: 'KeyRound', description: 'Serrature, infissi, urgenze' },
+  { slug: 'idraulico', label: 'Idraulico', icon: 'Droplets', description: 'Perdite, caldaie, sanitari', plural: 'idraulici' },
+  { slug: 'elettricista', label: 'Elettricista', icon: 'Zap', description: 'Impianti, guasti, domotica', plural: 'elettricisti' },
+  { slug: 'muratore', label: 'Muratore', icon: 'BrickWall', description: 'Ristrutturazioni, opere murarie', plural: 'muratori' },
+  { slug: 'falegname', label: 'Falegname', icon: 'Hammer', description: 'Mobili su misura, riparazioni', plural: 'falegnami' },
+  { slug: 'giardiniere', label: 'Giardiniere', icon: 'Leaf', description: 'Potature, manutenzione verde', plural: 'giardinieri' },
+  { slug: 'imbianchino', label: 'Imbianchino', icon: 'PaintRoller', description: 'Tinteggiature, cartongesso', plural: 'imbianchini' },
+  { slug: 'climatizzazione', label: 'Climatizzazione', icon: 'Wind', description: 'Condizionatori, pompe di calore', plural: 'tecnici clima', short: 'Clima' },
+  { slug: 'fabbro', label: 'Fabbro', icon: 'KeyRound', description: 'Serrature, infissi, urgenze', plural: 'fabbri' },
 ];
 
 // Centro città [lat, lon]: riferimento per la distanza nelle card risultato.

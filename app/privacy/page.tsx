@@ -10,7 +10,7 @@ const TODO = 'rounded bg-ember-soft px-1 font-bold text-ember-deep';
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen pt-14 md:pt-16">
+    <div className="min-h-screen pt-14 md:pt-[72px]">
       <div className="mx-auto max-w-2xl px-5 pb-16 pt-8 md:px-8 md:pt-14">
         <p className="mb-6 rounded-card bg-ember-soft p-3 text-[13px] font-semibold text-ember-deep">
           Bozza in revisione legale. Questo testo non è ancora definitivo.

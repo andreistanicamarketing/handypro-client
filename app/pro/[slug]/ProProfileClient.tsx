@@ -39,7 +39,7 @@ export default function ProProfileClient({
   const [bookingOpen, setBookingOpen] = useState(Boolean(initialDate && initialSlot));
 
   return (
-    <div className="min-h-screen pt-14 md:pt-16">
+    <div className="min-h-screen pt-14 md:pt-[72px]">
       <div className="mx-auto max-w-content px-4 pb-28 pt-4 md:px-8 md:pb-16 md:pt-8">
         {/* back */}
         <Link

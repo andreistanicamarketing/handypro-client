@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import {
   Droplets, Zap, BrickWall, Hammer, Leaf, PaintRoller, Wind, KeyRound,
-  ShieldCheck, CalendarCheck, Search as SearchIcon, Star, ArrowRight, MapPin,
+  ShieldCheck, CalendarCheck, Search as SearchIcon, Star, ArrowRight,
 } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
+import { Wordmark } from '@/components/layout/Navbar';
+import NextJobCard from '@/components/home/NextJobCard';
+import { ProInitialsAvatar } from '@/components/search/ProResultCard';
 import { CATEGORIES } from '@/lib/categories';
 import { searchPros, type Pro } from '@/lib/data';
 import Button from '@/components/ui/Button';
@@ -13,8 +16,6 @@ import Button from '@/components/ui/Button';
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Droplets, Zap, BrickWall, Hammer, Leaf, PaintRoller, Wind, KeyRound,
 };
-
-const PRICE_LABEL = { low: '€', medium: '€€', high: '€€€' } as const;
 
 // Senza questo la home resta ferma ai dati del build: la fetch qui sotto gira
 // una volta sola e il risultato viene cotto dentro la pagina statica.
@@ -28,170 +29,130 @@ export default async function HomePage() {
     const { pros } = await searchPros({});
     topPros = [...pros].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 6);
   } catch {
-    // backend giù: la home renderizza senza sezione "I più richiesti"
+    // backend giù: la home renderizza senza sezione "I più apprezzati"
   }
 
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative pt-24 md:pt-36">
+      <div
+        className="relative mx-auto flex max-w-shell flex-col gap-7 px-5 pb-12 pt-[calc(8px+var(--safe-top))] md:gap-14 md:px-8 md:pt-[calc(72px+56px)] lg:px-24"
+      >
         {/* alone caldo decorativo — clip su wrapper dedicato per non tagliare i dropdown della searchbar */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-ember/15 blur-3xl md:h-96 md:w-96" />
+          <div className="absolute -right-20 -top-[60px] h-[260px] w-[260px] rounded-full bg-ember/15 blur-[64px] md:-top-[120px] md:h-[520px] md:w-[520px]" />
         </div>
-        <div className="relative mx-auto max-w-content px-5 text-center md:px-8">
-          <p className="mb-4 inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3 py-1.5 text-[12px] font-bold text-ink-mute shadow-chip">
-            <ShieldCheck size={13} className="text-verde" />
-            Recensioni verificate da lavori reali
-          </p>
 
-          <h1 className="mb-3 mx-auto max-w-xl text-[34px] font-extrabold leading-[1.08] tracking-[-0.02em] text-ink sm:text-5xl md:max-w-3xl md:text-[54px]">
-            L&rsquo;artigiano <em className="font-accent text-ember-deep">giusto</em>,
-            a due passi da casa.
+        {/* ── Header mobile (su desktop c'è la navbar) ── */}
+        <div className="relative flex h-10 items-center md:hidden">
+          <Link href="/" aria-label="Handy Pro — home">
+            <Wordmark className="h-[22px] w-auto text-ink" />
+          </Link>
+        </div>
+
+        {/* ── Hero ── */}
+        <section className="relative flex flex-col gap-[18px] md:max-w-[820px] md:gap-[22px]">
+          <h1 className="text-[30px] font-extrabold leading-[1.1] tracking-[-.025em] text-ink md:text-[58px] md:leading-[1.02] md:tracking-[-.03em]">
+            L&rsquo;artigiano <em className="font-accent text-ember-deep">giusto</em>,{' '}
+            <br className="hidden md:block" />a due passi da casa.
           </h1>
-          <p className="mb-7 mx-auto max-w-md text-[15.5px] leading-relaxed text-ink-mute md:max-w-xl md:text-lg">
-            Idraulici, elettricisti, falegnami e altri professionisti vicino a
-            te. Scegli un orario libero e prenota in pochi tap.
+          <p className="hidden text-[18px] text-ink-mute md:block">
+            Scegli un orario libero e prenota in pochi tap.
           </p>
-
-          <div className="flex justify-center">
+          <div className="md:mt-1.5">
             <SearchBar variant="hero" />
           </div>
+        </section>
 
-          {/* ricerche rapide */}
-          <div className="mt-5 flex items-center justify-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <span className="shrink-0 text-[13px] font-medium text-ink-faint">Prova con:</span>
-            {CATEGORIES.slice(0, 5).map((c) => (
-              <Link
-                key={c.slug}
-                href={`/cerca?categoria=${c.slug}`}
-                className="pressable shrink-0 rounded-pill border border-line bg-white px-3.5 py-1.5 text-[13px] font-semibold text-ink shadow-chip hover:border-ember"
-              >
-                {c.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+        <NextJobCard />
 
-      {/* ── Categorie ────────────────────────────────────────────────── */}
-      <section className="mx-auto mt-14 max-w-content md:mt-24 md:px-8">
-        <div className="mb-5 flex items-end justify-between px-5 md:px-0">
-          <div>
-            <h2 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
-              Tutte le <em className="font-accent text-ember-deep">categorie</em>
-            </h2>
-            <p className="mt-1 text-[14px] text-ink-mute">Dai guasti urgenti alle ristrutturazioni.</p>
-          </div>
-        </div>
-
-        {/* scroll orizzontale su mobile, griglia su desktop */}
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 scrollbar-hide md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0">
-          {CATEGORIES.map((c) => {
-            const Icon = CATEGORY_ICONS[c.icon] ?? Hammer;
-            return (
-              <Link
-                key={c.slug}
-                href={`/cerca?categoria=${c.slug}`}
-                className="pressable group w-[124px] shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-chip hover:border-ember hover:shadow-soft md:w-auto md:p-5"
-              >
-                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-sand text-ink transition-colors group-hover:bg-ember group-hover:text-white md:h-12 md:w-12">
-                  <Icon size={21} />
-                </span>
-                <span className="block text-[14px] font-bold text-ink md:text-[15px]">
-                  {c.label}
-                </span>
-                <span className="mt-0.5 hidden text-[12.5px] leading-snug text-ink-mute md:block">
-                  {c.description}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── I più richiesti ──────────────────────────────────────────── */}
-      {topPros.length > 0 && (
-        <section className="mx-auto mt-14 max-w-content md:mt-24 md:px-8">
-          <div className="mb-5 flex items-end justify-between px-5 md:px-0">
-            <div>
-              <h2 className="text-[22px] font-extrabold tracking-tight text-ink md:text-3xl">
-                I più <em className="font-accent text-ember-deep">apprezzati</em>
-              </h2>
-              <p className="mt-1 text-[14px] text-ink-mute">
-                I professionisti con le recensioni migliori.
-              </p>
-            </div>
-            <Link
-              href="/cerca"
-              className="hidden shrink-0 items-center gap-1 text-[14px] font-bold text-ink hover:text-ember-deep md:inline-flex"
-            >
-              Vedi tutti <ArrowRight size={15} />
-            </Link>
-          </div>
-
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 scrollbar-hide md:grid md:grid-cols-3 md:gap-4 md:px-0">
-            {topPros.map((pro) => {
-              const initials = pro.name.split(' ').map((w) => w[0]).slice(0, 2).join('');
+        {/* ── Categorie: griglia 4×2 su mobile, 8 colonne su desktop ── */}
+        <section className="relative flex flex-col gap-3.5">
+          <h2 className="text-[20px] font-extrabold tracking-[-.02em] text-ink md:hidden">
+            Tutte le <em className="font-accent text-ember-deep">categorie</em>
+          </h2>
+          <div className="grid grid-cols-4 gap-x-2 gap-y-3.5 md:grid-cols-8 md:gap-3">
+            {CATEGORIES.map((c) => {
+              const Icon = CATEGORY_ICONS[c.icon] ?? Hammer;
               return (
                 <Link
-                  key={pro.id}
-                  href={`/pro/${pro.slug}`}
-                  className="pressable w-[240px] shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-chip hover:border-ember hover:shadow-soft md:w-auto md:p-5"
+                  key={c.slug}
+                  href={`/cerca?categoria=${c.slug}`}
+                  className="pressable flex flex-col items-center gap-[7px] md:gap-2.5 md:rounded-card md:border md:border-line md:bg-white md:px-3 md:py-[18px] md:hover:border-ember"
                 >
-                  <div className="mb-3 flex items-center gap-3">
-                    <span
-                      aria-hidden
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[15px] font-extrabold text-white"
-                      style={{ background: `hsl(${pro.hue} 42% 42%)` }}
-                    >
-                      {initials}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-1.5">
-                        <span className="truncate text-[15px] font-bold text-ink">{pro.name}</span>
-                        {pro.isVerified && (
-                          <ShieldCheck size={14} className="shrink-0 text-verde" aria-label="Verificato" />
-                        )}
-                      </span>
-                      <span className="block truncate text-[12.5px] text-ink-mute">
-                        {pro.categoryLabel} · {pro.specialization}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[13px]">
-                    <span className="inline-flex items-center gap-1 font-bold text-ink">
-                      <Star size={13} className="fill-ember text-ember" />
-                      {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
-                      {pro.rating !== null && (
-                        <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
-                      )}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-ink-mute">
-                      <MapPin size={13} />
-                      {pro.zona}
-                    </span>
-                    <span className="ml-auto font-bold text-ink-mute">
-                      {PRICE_LABEL[pro.priceRange]}
-                    </span>
-                  </div>
+                  <span className="flex h-[60px] w-[60px] items-center justify-center rounded-[18px] border border-line bg-white text-ink md:h-[46px] md:w-[46px] md:rounded-2xl md:border-0 md:bg-sand">
+                    <Icon size={22} aria-hidden />
+                  </span>
+                  <span className="text-[11.5px] font-semibold text-ink md:text-[13px] md:font-bold">
+                    <span className="md:hidden">{c.short ?? c.label}</span>
+                    <span className="hidden md:inline">{c.label}</span>
+                  </span>
                 </Link>
               );
             })}
           </div>
-
-          <div className="mt-4 px-5 md:hidden">
-            <Button
-              href="/cerca"
-              variant="outline"
-              className="flex shadow-chip"
-            >
-              Vedi tutti i professionisti <ArrowRight size={15} />
-            </Button>
-          </div>
         </section>
-      )}
 
+        {/* ── I più apprezzati ── */}
+        {topPros.length > 0 && (
+          <section className="relative flex flex-col gap-3.5">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-[20px] font-extrabold tracking-[-.02em] text-ink md:text-[26px]">
+                I più <em className="font-accent text-ember-deep">apprezzati</em>
+              </h2>
+              <Link href="/cerca" className="text-[13px] font-bold text-ink-mute hover:text-ember-deep md:text-[14px]">
+                Vedi tutti
+              </Link>
+            </div>
+            <div className="-mx-5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 scrollbar-hide md:mx-0 md:grid md:grid-cols-6 md:px-0">
+              {topPros.map((pro) => (
+                <Link
+                  key={pro.id}
+                  href={`/pro/${pro.slug}`}
+                  className="pressable flex w-[150px] shrink-0 snap-start flex-col gap-2.5 rounded-card border border-line bg-white p-3.5 hover:border-ember md:w-auto"
+                >
+                  <ProInitialsAvatar name={pro.name} hue={pro.hue} size={44} className="rounded-[14px]" />
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="flex items-center gap-1">
+                      <span className="truncate text-[14px] font-bold text-ink">{pro.name}</span>
+                      {pro.isVerified && (
+                        <ShieldCheck size={13} className="shrink-0 text-verde" aria-label="Verificato" />
+                      )}
+                    </span>
+                    <span className="truncate text-[12px] text-ink-mute">
+                      {pro.categoryLabel} · {pro.zona}
+                    </span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[12.5px] font-bold text-ink">
+                    <Star size={12} className="fill-ember text-ember" aria-hidden />
+                    {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
+                    {pro.rating !== null && (
+                      <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
+                    )}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Banner pro — mobile (su desktop la CTA grande in fondo) ── */}
+        <Link
+          href="/registrati?tipo=professionista"
+          className="pressable relative flex items-center gap-3.5 rounded-card border border-dashed border-ink/20 p-4 md:hidden"
+        >
+          <span className="flex flex-1 flex-col gap-[3px]">
+            <span className="text-[11px] font-extrabold uppercase tracking-[.1em] text-ink-faint">
+              Sei un professionista?
+            </span>
+            <span className="text-[14.5px] font-bold text-ink">Fatti trovare da chi ti sta cercando</span>
+          </span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+            <ArrowRight size={16} aria-hidden />
+          </span>
+        </Link>
+      </div>
+
+      <div className="hidden md:block">
       {/* ── Come funziona ────────────────────────────────────────────── */}
       <section className="mx-auto mt-16 max-w-content px-5 md:mt-28 md:px-8">
         <h2 className="mb-8 text-[22px] font-extrabold tracking-tight text-ink md:mb-12 md:text-center md:text-3xl">
@@ -262,6 +223,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      </div>
     </>
   );
 }

@@ -132,7 +132,7 @@ export default function AuthClient() {
 
   // ── Form ──
   return (
-    <div className="min-h-screen pt-14 md:pt-16">
+    <div className="min-h-screen pt-14 md:pt-[72px]">
       <div className="mx-auto max-w-md px-4 pb-12 pt-6 md:pt-12">
         <h1 className="mb-1 text-center text-[26px] font-extrabold tracking-tight text-ink">
           {tab === 'accedi' ? (

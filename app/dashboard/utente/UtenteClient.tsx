@@ -96,7 +96,7 @@ export default function UtenteClient() {
   }
 
   return (
-    <div className="min-h-screen pt-14 md:pt-16">
+    <div className="min-h-screen pt-14 md:pt-[72px]">
       <div className="mx-auto max-w-content px-4 pb-10 pt-5 md:px-8 md:pt-10">
         {/* header */}
         <div className="mb-5 flex items-end justify-between">
