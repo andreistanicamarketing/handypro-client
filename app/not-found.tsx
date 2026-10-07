@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-5 pt-14 text-center md:pt-16">
+    <div className="flex min-h-screen flex-col items-center justify-center px-5 pt-14 text-center md:pt-[72px]">
       <Wordmark className="h-9 w-auto text-ink" />
       <h1 className="mt-10 text-[26px] font-extrabold tracking-tight text-ink">
         Pagina non trovata

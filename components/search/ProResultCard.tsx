@@ -1,17 +1,19 @@
 'use client';
 
-// Card risultato — mobile-first: info compatta in alto,
-// disponibilità sotto. Su desktop le due zone vanno affiancate.
+// Card risultato "riga compatta" (~130px): tutta la card porta al profilo,
+// le pill orario portano direttamente alla prenotazione di quello slot.
 
 import Link from 'next/link';
-import { ShieldCheck, MapPin, Star } from 'lucide-react';
-import type { Pro } from '@/lib/data';
-import AvailabilityGrid from './AvailabilityGrid';
-import { cn } from '@/lib/utils';
-import Button from '@/components/ui/Button';
+import { BadgeCheck, Star } from 'lucide-react';
+import type { DayAvailability, Pro } from '@/lib/data';
+import { cn, formatDayLong, formatKm, toDateKey } from '@/lib/utils';
 
 interface ProResultCardProps {
   pro: Pro;
+  /** Disponibilità del pro (undefined = in caricamento) */
+  days?: DayAvailability[];
+  /** Distanza dalla zona cercata; omessa se non nota */
+  distanceKm?: number | null;
   isHighlighted?: boolean;
   onHover?: (proId: string | null) => void;
 }
@@ -22,118 +24,100 @@ const PRICE_LABEL: Record<Pro['priceRange'], string> = {
   high: '€€€',
 };
 
-export function ProInitialsAvatar({ name, hue, size = 56 }: { name: string; hue: number; size?: number }) {
+export function ProInitialsAvatar({
+  name,
+  hue,
+  size = 56,
+  className,
+}: {
+  name: string;
+  hue: number;
+  size?: number;
+  className?: string;
+}) {
   const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('');
   return (
     <div
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-2xl font-extrabold text-white"
-      style={{ width: size, height: size, fontSize: size * 0.32, background: `hsl(${hue} 42% 42%)` }}
+      className={cn('flex shrink-0 items-center justify-center rounded-2xl font-extrabold text-white', className)}
+      style={{ width: size, height: size, fontSize: Math.round(size / 3), background: `hsl(${hue} 42% 42%)` }}
     >
       {initials}
     </div>
   );
 }
 
-export default function ProResultCard({ pro, isHighlighted, onHover }: ProResultCardProps) {
+/** "Oggi" / "Domani" / "Sab" */
+const dayLabel = (date: Date) => formatDayLong(date).split(' ')[0];
+
+export default function ProResultCard({ pro, days, distanceKm, isHighlighted, onHover }: ProResultCardProps) {
+  const slots = days
+    ?.flatMap((d) => d.slots.map((time) => ({ date: d.date, time })))
+    .slice(0, 3);
+  const meta = [pro.categoryLabel, pro.zona, distanceKm != null ? formatKm(distanceKm) : null]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <article
       onMouseEnter={() => onHover?.(pro.id)}
       onMouseLeave={() => onHover?.(null)}
       className={cn(
-        'rounded-card border bg-white p-4 transition-shadow md:p-5',
+        'relative flex flex-col gap-3 rounded-card border bg-white px-4 pb-4 pt-3.5 transition-[border-color,box-shadow] duration-200',
         isHighlighted
-          ? 'border-ember shadow-lift'
-          : 'border-line shadow-chip hover:shadow-soft'
+          ? 'border-ember shadow-[0_16px_36px_-14px_rgba(21,34,56,.32)]'
+          : 'border-line shadow-chip'
       )}
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
-        {/* ── Info ── */}
-        <div className="min-w-0 flex-1">
-          <div className="flex gap-3">
-            <Link href={`/pro/${pro.slug}`} className="pressable shrink-0">
-              <ProInitialsAvatar name={pro.name} hue={pro.hue} />
+      <div className="flex items-center gap-3">
+        <ProInitialsAvatar name={pro.name} hue={pro.hue} size={44} className="rounded-[14px]" />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className="flex min-w-0 items-center gap-[5px]">
+            {/* Link "stirato" su tutta la card (after:inset-0): niente link annidati */}
+            <Link
+              href={`/pro/${pro.slug}`}
+              className="truncate text-[15.5px] font-bold tracking-[-.01em] text-ink after:absolute after:inset-0 after:rounded-card"
+            >
+              {pro.name}
             </Link>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <Link
-                  href={`/pro/${pro.slug}`}
-                  className="truncate text-[16.5px] font-bold text-ink hover:text-ember-deep"
-                >
-                  {pro.name}
-                </Link>
-                <span className="shrink-0 rounded-lg bg-sand px-2 py-0.5 text-[12px] font-bold text-ink-mute">
-                  {PRICE_LABEL[pro.priceRange]}
-                </span>
-              </div>
-              <p className="truncate text-[13.5px] font-medium text-ink-mute">
-                {pro.categoryLabel} · {pro.specialization}
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
-                <span className="inline-flex items-center gap-1 font-bold text-ink">
-                  <Star size={13} className="fill-ember text-ember" />
-                  {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
-                  {pro.rating !== null && (
-                    <span className="font-medium text-ink-faint">({pro.reviewCount})</span>
-                  )}
-                </span>
-                {pro.isVerified && (
-                  <span className="inline-flex items-center gap-1 font-semibold text-verde">
-                    <ShieldCheck size={13} />
-                    Verificato
-                  </span>
-                )}
-              </div>
-            </div>
+            {pro.isVerified && (
+              <BadgeCheck size={15} className="shrink-0 text-verde" aria-label="Verificato" />
+            )}
           </div>
+          <span className="truncate text-[12.5px] font-medium text-ink-mute">{meta}</span>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-0.5">
+          <span className="inline-flex items-center gap-1 text-[14px] font-extrabold text-ink">
+            <Star size={13} className="fill-ember text-ember" aria-hidden />
+            {pro.rating === null ? 'Nuovo' : pro.rating.toFixed(1)}
+          </span>
+          <span className="text-[12px] font-semibold text-ink-faint">{PRICE_LABEL[pro.priceRange]}</span>
+        </div>
+      </div>
 
-          <p className="mt-2.5 flex items-center gap-1.5 text-[13px] text-ink-mute">
-            <MapPin size={13} className="shrink-0" />
-            <span className="truncate">
-              {pro.address}, {pro.city}
-              {pro.zona ? ` · ${pro.zona}` : ''}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+        {slots === undefined ? (
+          <span className="h-[34px] w-full animate-pulse rounded-pill bg-sand/60" aria-label="Caricamento disponibilità" />
+        ) : slots.length === 0 ? (
+          <span className="text-[12.5px] font-medium text-ink-faint">Nessun orario libero nei prossimi giorni</span>
+        ) : (
+          <>
+            <span className="mr-0.5 inline-flex shrink-0 items-center gap-[5px] text-[11px] font-extrabold uppercase tracking-[.06em] text-ember-deep">
+              <span className="h-1.5 w-1.5 rounded-full bg-ember" aria-hidden />
+              Libero
             </span>
-          </p>
-
-          {/* Servizi — chips scorrevoli su mobile */}
-          <ul className="mt-3 flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide lg:flex-wrap lg:overflow-visible">
-            {pro.services.slice(0, 3).map((s) => (
-              <li
-                key={s.name}
-                className="shrink-0 rounded-pill border border-line bg-cream px-3 py-1.5 text-[12px] font-medium text-ink-mute"
+            {slots.map((s) => (
+              <Link
+                key={`${toDateKey(s.date)}-${s.time}`}
+                href={`/pro/${pro.slug}?data=${toDateKey(s.date)}&ora=${s.time}`}
+                className="pressable relative z-10 flex shrink-0 gap-1 rounded-pill border border-line bg-cream px-3 py-[7px] text-[13px] text-ink hover:border-ink hover:bg-ink hover:text-white active:border-ink active:bg-ink active:text-white"
               >
-                {s.name} · <span className="font-bold text-ink">{s.price}</span>
-              </li>
+                <span className="font-medium opacity-60">{dayLabel(s.date)}</span>
+                <span className="font-bold">{s.time}</span>
+              </Link>
             ))}
-          </ul>
-
-          <Button
-            href={`/pro/${pro.slug}`}
-            variant="subtle"
-            size="sm"
-            className="mt-3.5 hidden lg:inline-flex"
-          >
-            Vedi profilo
-          </Button>
-        </div>
-
-        {/* ── Disponibilità ── */}
-        <div className="border-t border-line pt-3.5 lg:w-[330px] lg:shrink-0 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-          <p className="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink-faint">
-            Prossime disponibilità
-          </p>
-          <AvailabilityGrid proSlug={pro.slug} visibleDays={4} />
-        </div>
-
-        {/* CTA profilo — solo mobile, a tutta larghezza */}
-        <Button
-          href={`/pro/${pro.slug}`}
-          variant="subtle"
-          size="md"
-          className="flex active:bg-ink active:text-white lg:hidden"
-        >
-          Vedi profilo completo
-        </Button>
+          </>
+        )}
       </div>
     </article>
   );

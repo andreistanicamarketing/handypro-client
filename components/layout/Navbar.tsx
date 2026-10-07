@@ -1,12 +1,13 @@
 'use client';
 
-// Top bar — minimale su mobile (logo + accedi), completa su desktop.
-// Link di navigazione centrali adattati al ruolo dell'utente.
+// Top bar — completa su desktop; su mobile solo nelle pagine senza header proprio.
+// Su /cerca (desktop) i link lasciano il posto alla ricerca compatta.
 
-import { useId } from 'react';
+import { Suspense, useId } from 'react';
 import Link from 'next/link';
 import { IconButton } from '@/components/ui/Button';
-import { usePathname, useRouter } from 'next/navigation';
+import SearchBar from '@/components/search/SearchBar';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { useSession, logout, areaForRole, type MockSession } from '@/lib/auth-mock';
 import { cn } from '@/lib/utils';
@@ -14,7 +15,7 @@ import { cn } from '@/lib/utils';
 /** Link desktop adattati al ruolo */
 function getNavLinks(session: MockSession | null) {
   const cerca = { href: '/cerca', label: 'Cerca' };
-  if (!session) return [cerca];
+  if (!session) return [cerca, { href: '/come-funziona', label: 'Come funziona' }];
   if (session.role === 'privato') {
     return [cerca, { href: '/dashboard/utente', label: 'I miei lavori' }];
   }
@@ -57,12 +58,29 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
+/** Pagine che su mobile disegnano il proprio header: lì la top bar sparisce. */
+const OWN_MOBILE_HEADER = ['/cerca', '/pro/', '/dashboard'];
+
+/** Ricerca compatta nella navbar di /cerca, sincronizzata con l'URL. */
+function NavSearch() {
+  const params = useSearchParams();
+  const categoria = params.get('categoria') ?? '';
+  const zona = params.get('zona') ?? '';
+  return (
+    <SearchBar key={`${categoria}|${zona}`} variant="compact" initialCategory={categoria} initialLocation={zona} />
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname() ?? '/';
   const router = useRouter();
   const { session, ready } = useSession();
 
-  const navLinks = getNavLinks(ready ? session : null);
+  const isCerca = pathname.startsWith('/cerca');
+  const ownMobileHeader =
+    pathname === '/' || OWN_MOBILE_HEADER.some((p) => pathname.startsWith(p));
+  // Su /cerca la ricerca prende il centro: "Cerca" sparisce, gli altri link vanno a destra
+  const navLinks = getNavLinks(ready ? session : null).filter((l) => !(isCerca && l.href === '/cerca'));
 
   function isActive(href: string) {
     if (href === '/') return pathname === '/';
@@ -70,32 +88,30 @@ export default function Navbar() {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-cream/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-shell items-center justify-between px-4 md:h-16 md:px-8">
-        <Link href="/" aria-label="Handy Pro — home">
+    <header
+      className={cn(
+        'fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-cream/90 backdrop-blur-md',
+        ownMobileHeader && 'hidden md:block'
+      )}
+    >
+      <div className="mx-auto flex h-14 max-w-shell items-center gap-8 px-4 md:h-[72px] md:px-8">
+        <Link href="/" aria-label="Handy Pro — home" className="shrink-0">
           <Wordmark className="h-[22px] w-auto text-ink md:h-6" />
         </Link>
 
-        {/* Link centrali — solo desktop, role-aware */}
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Sezioni">
-          {navLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={cn(
-                'pressable rounded-pill px-4 py-2 text-[14px] font-semibold transition-colors',
-                isActive(l.href)
-                  ? 'bg-sand text-ink'
-                  : 'text-ink-mute hover:bg-sand/60 hover:text-ink'
-              )}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        {isCerca ? (
+          <div className="hidden min-w-0 max-w-[460px] flex-1 md:block">
+            <Suspense>
+              <NavSearch />
+            </Suspense>
+          </div>
+        ) : (
+          <NavLinks links={navLinks} isActive={isActive} className="-ml-4" />
+        )}
 
         {/* Lato destro */}
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
+          {isCerca && <NavLinks links={navLinks} isActive={isActive} />}
           {ready && session ? (
             <>
               <Link
@@ -122,7 +138,7 @@ export default function Navbar() {
             <>
               <Link
                 href="/registrati?tipo=professionista"
-                className="pressable hidden rounded-pill px-4 py-2 text-[14px] font-semibold text-ink-mute transition-colors hover:bg-sand/60 hover:text-ink md:inline-block"
+                className="pressable hidden whitespace-nowrap rounded-pill px-4 py-2 text-[14px] font-semibold text-ink-mute transition-colors hover:bg-sand/60 hover:text-ink md:inline-block"
               >
                 Sei un professionista?
               </Link>
@@ -137,5 +153,33 @@ export default function Navbar() {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Link di sezione — solo desktop, role-aware */
+function NavLinks({
+  links,
+  isActive,
+  className,
+}: {
+  links: { href: string; label: string }[];
+  isActive: (href: string) => boolean;
+  className?: string;
+}) {
+  return (
+    <nav className={cn('hidden items-center gap-1 md:flex', className)} aria-label="Sezioni">
+      {links.map((l) => (
+        <Link
+          key={l.href}
+          href={l.href}
+          className={cn(
+            'pressable whitespace-nowrap rounded-pill px-4 py-2 text-[14px] font-semibold transition-colors',
+            isActive(l.href) ? 'bg-sand text-ink' : 'text-ink-mute hover:bg-sand/60 hover:text-ink'
+          )}
+        >
+          {l.label}
+        </Link>
+      ))}
+    </nav>
   );
 }

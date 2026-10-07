@@ -16,6 +16,7 @@
   --sand: #f1eae0;
   --ember: #ff6600;
   --line: #e9e2d8;
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -80,14 +81,9 @@ a {
     display: none;
   }
 
-  /* Padding per la bottom nav su mobile (+ safe area iOS) */
+  /* Spazio sotto la tab bar flottante su mobile (+ safe area iOS) */
   .pb-bottom-nav {
-    padding-bottom: calc(76px + var(--safe-bottom));
-  }
-  @media (min-width: 768px) {
-    .pb-bottom-nav {
-      padding-bottom: 0;
-    }
+    padding-bottom: calc(110px + var(--safe-bottom));
   }
 
   /* Tocco app-like: feedback al press */
@@ -100,15 +96,27 @@ a {
   }
 }
 
-/* ── Leaflet: coerenza con il design system ── */
+/* ── Leaflet: mappa virata al crema ── */
 .leaflet-container {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #efe9df; /* fallback caldo mentre le tile caricano */
+  background: #f3ede3;
 }
-.leaflet-popup-content-wrapper {
-  border-radius: 14px;
-  box-shadow: 0 8px 28px -8px rgba(21, 34, 56, 0.3);
+/* Tile OSM → base crema, strade chiare, niente verdi/blu saturi.
+   Da ritarare se si cambia provider. */
+.leaflet-tile-pane {
+  filter: grayscale(0.85) sepia(0.35) brightness(1.06) contrast(0.88) saturate(0.7);
 }
-.leaflet-popup-content {
-  margin: 12px 14px;
+.leaflet-container .leaflet-control-attribution {
+  font-size: 9.5px;
+  color: var(--ink-faint, #8a96a8);
+  background: rgba(250, 246, 240, 0.8);
+  border-radius: 4px 0 0 0;
+}
+.leaflet-container .leaflet-control-attribution a {
+  color: inherit;
+}
+@media (max-width: 767px) {
+  .leaflet-control-zoom {
+    display: none;
+  }
 }

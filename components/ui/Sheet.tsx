@@ -50,7 +50,7 @@ export default function Sheet({ open, onClose, label, className, children }: She
         )}
       >
         <div className="flex justify-center pt-2.5 sm:hidden" aria-hidden>
-          <span className="h-1 w-10 rounded-pill bg-line" />
+          <span className="h-[5px] w-10 rounded-pill bg-sand-deep" />
         </div>
         {children}
       </div>

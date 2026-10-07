@@ -1,7 +1,7 @@
 'use client';
 
-// Bottom navigation app-like — solo mobile, role-aware.
-// 4 tab adattate in base allo stato di autenticazione e al ruolo.
+// Tab bar flottante — solo mobile, role-aware.
+// Capsula ink staccata dal bordo: la tab attiva si allarga in ember con etichetta.
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -47,7 +47,7 @@ export default function BottomNav() {
       ? {
           href: areaForRole(session.role),
           label: session.role === 'professionista' ? 'Attività' : 'I miei lavori',
-          icon: CalendarDays,
+          icon: session.role === 'professionista' ? Briefcase : CalendarDays,
           match: (p) => p.startsWith('/dashboard'),
         }
       : {
@@ -57,60 +57,46 @@ export default function BottomNav() {
           icon: Briefcase,
           match: () => false,
         },
-    // --- Tab 4: profilo / accedi ---
-    proProfilePath
-      ? {
-          // Professionista loggato → proprio profilo pubblico
-          href: proProfilePath,
-          label: 'Profilo',
-          icon: UserRound,
-          match: (p) => p === proProfilePath,
-        }
-      : {
-          // Cliente loggato o non autenticato → pagina accesso/profilo
-          href: '/registrati',
-          label: session ? 'Profilo' : 'Accedi',
-          icon: UserRound,
-          match: (p) => p.startsWith('/registrati'),
-        },
+    // --- Tab 4: account (accedi, oppure profilo con logout) — per tutti i ruoli ---
+    {
+      href: '/registrati',
+      label: session ? 'Profilo' : 'Accedi',
+      icon: UserRound,
+      match: (p) => p.startsWith('/registrati'),
+    },
   ];
 
+  // Sul profilo di un altro pro la CTA "Prenota" sticky prende il posto della tab bar
+  if (pathname.startsWith('/pro/') && pathname !== proProfilePath) return null;
+
   return (
-    <nav
-      aria-label="Navigazione principale"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/95 shadow-nav-up backdrop-blur-md md:hidden"
-      style={{ paddingBottom: 'var(--safe-bottom)' }}
+    <div
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3.5 md:hidden"
+      style={{ paddingBottom: 'calc(24px + var(--safe-bottom))' }}
     >
-      <div className="grid h-[64px] grid-cols-4">
+      <nav
+        aria-label="Navigazione principale"
+        className="pointer-events-auto flex h-16 items-center gap-1 rounded-pill bg-ink px-2 shadow-[0_14px_34px_-10px_rgba(21,34,56,.55)]"
+      >
         {ITEMS.map((item) => {
           const active = item.match(pathname);
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-label={item.label}
               aria-current={active ? 'page' : undefined}
-              className="pressable flex flex-col items-center justify-center gap-0.5"
+              className={cn(
+                'pressable flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-pill text-[13.5px] font-bold',
+                active ? 'flex-none bg-ember px-[18px] text-white' : 'flex-1 text-white/[.62]'
+              )}
             >
-              <span
-                className={cn(
-                  'flex h-7 w-12 items-center justify-center rounded-full transition-colors',
-                  active ? 'bg-ember-soft text-ember-deep' : 'text-ink-faint'
-                )}
-              >
-                <item.icon size={19} strokeWidth={active ? 2.4 : 2} />
-              </span>
-              <span
-                className={cn(
-                  'text-[10.5px] font-semibold',
-                  active ? 'text-ink' : 'text-ink-faint'
-                )}
-              >
-                {item.label}
-              </span>
+              <item.icon size={20} strokeWidth={active ? 2.4 : 2} aria-hidden />
+              {active && <span>{item.label}</span>}
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }

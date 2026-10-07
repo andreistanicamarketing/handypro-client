@@ -25,7 +25,7 @@ const VETRINA = [
 
 export default function AbbonamentiPage() {
   return (
-    <div className="min-h-screen pt-14 md:pt-16">
+    <div className="min-h-screen pt-14 md:pt-[72px]">
       <div className="mx-auto max-w-content px-5 pb-16 pt-8 md:px-8 md:pt-14">
         <h1 className="text-[26px] font-extrabold tracking-tight text-ink md:text-4xl">
           Abbonamenti per <em className="font-accent text-ember-deep">professionisti</em>

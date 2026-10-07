@@ -1,9 +1,11 @@
 'use client';
 
-// Search card mobile-first: campi impilati su mobile, in linea su desktop.
-// Autocomplete per categorie/professionisti e città.
+// Ricerca "capsula": cosa + dove in un'unica superficie bianca.
+// hero → due righe impilate + bottone quadrato su mobile, pill alta su desktop.
+// compact → pill divisa a metà, senza bottone (invio da tastiera).
+// Autocomplete per categorie e città.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Search, MapPin, Wrench } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, CITIES } from '@/lib/categories';
@@ -36,6 +38,7 @@ export default function SearchBar({
   const [openPanel, setOpenPanel] = useState<'query' | 'location' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const containerRef = useRef<HTMLFormElement>(null);
+  const id = useId();
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -92,6 +95,13 @@ export default function SearchBar({
     );
   }
 
+  const inputClass = cn(
+    'w-full min-w-0 bg-transparent text-ink outline-none focus-visible:outline-none placeholder:font-medium placeholder:text-ink-faint',
+    isHero ? 'text-[15px] font-semibold sm:text-[15.5px]' : 'text-[14px]',
+    'leading-[1.2]' // dopo text-[…]: tailwind-merge altrimenti lo scarta
+  );
+  const labelClass = 'text-[11px] font-semibold leading-tight text-ink-faint sm:text-[11.5px]';
+
   return (
     <form
       ref={containerRef}
@@ -101,41 +111,51 @@ export default function SearchBar({
       }}
       role="search"
       className={cn(
-        'relative w-full bg-white',
+        'relative flex w-full items-center border border-line bg-white text-left',
         isHero
-          ? 'max-w-2xl rounded-sheet p-2 shadow-lift sm:rounded-pill'
-          : 'max-w-2xl rounded-pill border border-line p-1 shadow-soft'
+          ? 'max-w-[760px] gap-1.5 rounded-[22px] py-1 pl-1 pr-2 shadow-[0_12px_30px_-20px_rgba(21,34,56,.4)] sm:h-[68px] sm:gap-0 sm:rounded-pill sm:py-0 sm:pl-0 sm:shadow-[0_18px_40px_-22px_rgba(21,34,56,.45)]'
+          : 'h-[46px] max-w-2xl rounded-pill shadow-[0_6px_18px_-12px_rgba(21,34,56,.35)]'
       )}
     >
-      <div className={cn('flex', isHero ? 'flex-col sm:flex-row sm:items-center' : 'flex-row items-center')}>
+      <div className={cn('flex min-w-0 flex-1', isHero ? 'flex-col sm:h-full sm:flex-row sm:items-center' : 'h-full items-center')}>
         {/* ── Campo "cosa" ── */}
         <div
           className={cn(
-            'relative flex min-w-0 items-center gap-2.5',
+            'relative flex min-w-0 items-center',
             isHero
-              ? 'flex-[1.2] border-b border-line px-3 py-3 sm:border-b-0 sm:border-r sm:py-2'
-              : 'flex-[1.2] border-r border-line px-3 py-1.5'
+              ? 'gap-3 px-3 py-2.5 sm:h-full sm:flex-[1.2] sm:py-0 sm:pl-7 sm:pr-5'
+              : 'h-full flex-[1.2] gap-2 pl-4 pr-2.5'
           )}
         >
-          <Wrench size={17} className="shrink-0 text-ink-faint" aria-hidden />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedCategory('');
-              setOpenPanel('query');
-            }}
-            onFocus={() => setOpenPanel('query')}
-            placeholder="Di cosa hai bisogno?"
-            aria-label="Categoria o nome del professionista"
-            autoComplete="off"
-            enterKeyHint="search"
-            className={cn(
-              'w-full min-w-0 bg-transparent font-semibold text-ink outline-none placeholder:font-medium placeholder:text-ink-faint',
-              isHero ? 'text-[16px]' : 'text-[14px]'
-            )}
+          <Search
+            size={isHero ? 18 : 16}
+            strokeWidth={isHero ? 2 : 2.4}
+            className={cn('shrink-0', isHero ? 'text-ink-faint' : 'text-ink')}
+            aria-hidden
           />
+          <div className="flex min-w-0 flex-1 flex-col gap-px">
+            {isHero && (
+              <label htmlFor={`${id}-cosa`} className={labelClass}>
+                Cosa
+              </label>
+            )}
+            <input
+              id={`${id}-cosa`}
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSelectedCategory('');
+                setOpenPanel('query');
+              }}
+              onFocus={() => setOpenPanel('query')}
+              placeholder="Di cosa hai bisogno?"
+              aria-label={isHero ? undefined : 'Categoria o nome del professionista'}
+              autoComplete="off"
+              enterKeyHint="search"
+              className={cn(inputClass, !isHero && 'font-bold')}
+            />
+          </div>
           {openPanel === 'query' && suggestions.length > 0 && (
             <Panel>
               {suggestions.map((s) => (
@@ -170,31 +190,45 @@ export default function SearchBar({
           )}
         </div>
 
+        <span
+          aria-hidden
+          className={cn('shrink-0 bg-line', isHero ? 'ml-[42px] mr-2 h-px sm:mx-0 sm:h-8 sm:w-px' : 'h-[22px] w-px')}
+        />
+
         {/* ── Campo "dove" ── */}
         <div
           className={cn(
-            'relative flex min-w-0 flex-1 items-center gap-2.5',
-            isHero ? 'px-3 py-3 sm:py-2' : 'px-3 py-1.5'
+            'relative flex min-w-0 items-center',
+            isHero ? 'gap-3 px-3 py-2.5 sm:h-full sm:flex-1 sm:px-5 sm:py-0' : 'h-full flex-1 gap-2 pl-3 pr-4'
           )}
         >
-          <MapPin size={17} className="shrink-0 text-ink-faint" aria-hidden />
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => {
-              setLocation(e.target.value);
-              setOpenPanel('location');
-            }}
-            onFocus={() => setOpenPanel('location')}
-            placeholder="Dove? Città o zona"
-            aria-label="Città o zona"
-            autoComplete="off"
-            enterKeyHint="search"
-            className={cn(
-              'w-full min-w-0 bg-transparent font-semibold text-ink outline-none placeholder:font-medium placeholder:text-ink-faint',
-              isHero ? 'text-[16px]' : 'text-[14px]'
-            )}
+          <MapPin
+            size={isHero ? 18 : 16}
+            className={cn('shrink-0', isHero ? 'text-ink-faint' : 'text-ink-mute')}
+            aria-hidden
           />
+          <div className="flex min-w-0 flex-1 flex-col gap-px">
+            {isHero && (
+              <label htmlFor={`${id}-dove`} className={labelClass}>
+                Dove
+              </label>
+            )}
+            <input
+              id={`${id}-dove`}
+              type="text"
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                setOpenPanel('location');
+              }}
+              onFocus={() => setOpenPanel('location')}
+              placeholder="Dove? Città o zona"
+              aria-label={isHero ? undefined : 'Città o zona'}
+              autoComplete="off"
+              enterKeyHint="search"
+              className={cn(inputClass, !isHero && 'font-medium text-ink-mute')}
+            />
+          </div>
           {openPanel === 'location' && citySuggestions.length > 0 && (
             <Panel>
               {citySuggestions.map((c) => (
@@ -217,22 +251,23 @@ export default function SearchBar({
             </Panel>
           )}
         </div>
+      </div>
 
-        {/* ── Bottone ── */}
+      {/* ── Bottone — compact: invisibile, serve solo all'invio da tastiera ── */}
+      {isHero ? (
         <button
           type="submit"
-          className={cn(
-            'pressable flex shrink-0 items-center justify-center gap-2 bg-ember-gradient font-bold text-white',
-            isHero
-              ? 'mt-2 h-12 w-full rounded-2xl text-[15px] sm:mt-0 sm:h-11 sm:w-11 sm:rounded-pill'
-              : 'h-9 w-9 rounded-pill'
-          )}
           aria-label="Cerca"
+          className="pressable flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[18px] bg-ember-gradient text-white shadow-[0_8px_18px_-8px_rgba(255,102,0,.7)] sm:w-auto sm:gap-2 sm:rounded-pill sm:px-6 sm:shadow-none"
         >
-          <Search size={isHero ? 18 : 15} strokeWidth={2.5} />
-          {isHero && <span className="sm:hidden">Cerca</span>}
+          <Search strokeWidth={2.5} className="h-5 w-5 sm:h-[17px] sm:w-[17px]" aria-hidden />
+          <span className="hidden text-[15px] font-bold sm:inline">Cerca</span>
         </button>
-      </div>
+      ) : (
+        <button type="submit" tabIndex={-1} aria-hidden className="sr-only">
+          Cerca
+        </button>
+      )}
     </form>
   );
 }
