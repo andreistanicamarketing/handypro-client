@@ -130,7 +130,7 @@ const MapViewInner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full min-h-[300px] w-full items-center justify-center bg-gray-100 text-sm text-brand-grey">
+      <div className="flex h-full min-h-[300px] w-full items-center justify-center bg-gray-100 text-sm text-ink-mute">
         Caricamento mappa…
       </div>
     ),

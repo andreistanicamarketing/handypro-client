@@ -9,6 +9,7 @@
 @tailwind utilities;
 
 :root {
+  /* Solo i token che servono al CSS puro: la fonte di verità è tailwind.config.ts */
   --ink: #152238;
   --ink-mute: #5c6b82;
   --cream: #faf6f0;

@@ -10,6 +10,8 @@ import { CATEGORIES } from '@/lib/categories';
 import { searchPros, type Pro } from '@/lib/data';
 import type { PriceRange } from '@/types';
 import { cn } from '@/lib/utils';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 export default function CercaClient() {
   const searchParams = useSearchParams();
@@ -149,17 +151,17 @@ export default function CercaClient() {
           </p>
 
           {error ? (
-            <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+            <Card className="p-10 text-center">
               <p className="mb-1 font-bold text-ink">Impossibile caricare i risultati</p>
               <p className="mb-4 text-[14px] text-ink-mute">{error}</p>
-              <button
-                type="button"
+              <Button
                 onClick={() => setReloadKey((k) => k + 1)}
-                className="pressable h-11 rounded-2xl bg-ink px-5 text-[14px] font-bold text-white"
+                variant="dark"
+                size="md"
               >
                 Riprova
-              </button>
-            </div>
+              </Button>
+            </Card>
           ) : results === null ? (
             <div className="flex flex-col gap-3.5" aria-label="Caricamento risultati">
               {[0, 1, 2].map((i) => (
@@ -167,12 +169,12 @@ export default function CercaClient() {
               ))}
             </div>
           ) : results.length === 0 ? (
-            <div className="rounded-card border border-line bg-white p-10 text-center shadow-chip">
+            <Card className="p-10 text-center">
               <p className="mb-1 font-bold text-ink">Nessun risultato</p>
               <p className="text-[14px] text-ink-mute">
                 Prova ad allargare la zona o a rimuovere qualche filtro.
               </p>
-            </div>
+            </Card>
           ) : (
             <div className="flex flex-col gap-3.5">
               {results.map((pro, i) => (

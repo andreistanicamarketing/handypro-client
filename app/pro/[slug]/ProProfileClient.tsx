@@ -13,6 +13,8 @@ import BookingSheet from '@/components/booking/BookingSheet';
 import MapView from '@/components/map/MapView';
 import { ProInitialsAvatar } from '@/components/search/ProResultCard';
 import { cn, timeAgo } from '@/lib/utils';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 interface ProProfileClientProps {
   pro: Pro;
@@ -52,7 +54,7 @@ export default function ProProfileClient({
           {/* ── Colonna principale ── */}
           <div className="min-w-0 flex-1">
             {/* Header */}
-            <section className="rounded-card border border-line bg-white p-5 shadow-chip md:p-6">
+            <Card as="section" className="p-5 md:p-6">
               <div className="flex gap-4">
                 <ProInitialsAvatar name={pro.name} hue={pro.hue} size={72} />
                 <div className="min-w-0 flex-1">
@@ -108,10 +110,10 @@ export default function ProProfileClient({
               </div>
 
               <p className="mt-4 text-[14.5px] leading-relaxed text-ink-mute">{pro.bio}</p>
-            </section>
+            </Card>
 
             {/* Servizi e prezzi */}
-            <section className="mt-4 rounded-card border border-line bg-white p-5 shadow-chip md:p-6">
+            <Card as="section" className="mt-4 p-5 md:p-6">
               <h2 className="mb-3 text-[17px] font-extrabold tracking-tight text-ink">
                 Servizi e <em className="font-accent text-ember-deep">prezzi</em>
               </h2>
@@ -136,10 +138,10 @@ export default function ProProfileClient({
                 I prezzi sono indicativi: il preventivo definitivo viene confermato dal
                 professionista prima dell&rsquo;intervento.
               </p>
-            </section>
+            </Card>
 
             {/* Recensioni */}
-            <section className="mt-4 rounded-card border border-line bg-white p-5 shadow-chip md:p-6">
+            <Card as="section" className="mt-4 p-5 md:p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-[17px] font-extrabold tracking-tight text-ink">
                   Recensioni <em className="font-accent text-ember-deep">verificate</em>
@@ -186,11 +188,11 @@ export default function ProProfileClient({
                   ))}
                 </ul>
               )}
-            </section>
+            </Card>
 
             {/* Zona operativa */}
             {pro.lat !== null && pro.lon !== null && (
-              <section className="mt-4 overflow-hidden rounded-card border border-line bg-white shadow-chip">
+              <Card as="section" className="mt-4 overflow-hidden">
                 <div className="p-5 pb-3 md:p-6 md:pb-3">
                   <h2 className="text-[17px] font-extrabold tracking-tight text-ink">
                     Zona operativa
@@ -207,13 +209,13 @@ export default function ProProfileClient({
                     height="100%"
                   />
                 </div>
-              </section>
+              </Card>
             )}
           </div>
 
           {/* ── Colonna disponibilità (sticky su desktop) ── */}
           <aside className="mt-4 md:mt-0 md:w-[360px] md:shrink-0">
-            <div className="rounded-card border border-line bg-white p-5 shadow-chip md:sticky md:top-24">
+            <Card className="p-5 md:sticky md:top-24">
               <h2 className="mb-1 flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-ink">
                 <CalendarDays size={17} className="text-ember-deep" />
                 Disponibilità
@@ -222,14 +224,13 @@ export default function ProProfileClient({
                 Scegli un orario: il professionista confermerà la richiesta.
               </p>
               <AvailabilityGrid proSlug={pro.slug} visibleDays={4} />
-              <button
-                type="button"
+              <Button
                 onClick={() => setBookingOpen(true)}
-                className="pressable mt-4 hidden h-12 w-full rounded-2xl bg-ember-gradient text-[15px] font-bold text-white md:block"
+                className="mt-4 hidden w-full md:inline-flex"
               >
                 Prenota un intervento
-              </button>
-            </div>
+              </Button>
+            </Card>
           </aside>
         </div>
       </div>
@@ -239,13 +240,12 @@ export default function ProProfileClient({
         className="fixed inset-x-0 z-40 px-4 md:hidden"
         style={{ bottom: 'calc(72px + var(--safe-bottom))' }}
       >
-        <button
-          type="button"
+        <Button
           onClick={() => setBookingOpen(true)}
-          className="pressable h-12 w-full rounded-2xl bg-ember-gradient text-[15.5px] font-bold text-white shadow-lift"
+          className="w-full shadow-lift"
         >
           Prenota un intervento
-        </button>
+        </Button>
       </div>
 
       <BookingSheet

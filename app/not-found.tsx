@@ -1,7 +1,7 @@
 // 404 — pagina non trovata.
 
-import Link from 'next/link';
 import { Wordmark } from '@/components/layout/Navbar';
+import Button from '@/components/ui/Button';
 
 export default function NotFound() {
   return (
@@ -14,18 +14,19 @@ export default function NotFound() {
         Il link potrebbe essere sbagliato o la pagina non esiste più.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link
+        <Button
           href="/cerca"
-          className="pressable inline-flex h-11 items-center rounded-2xl bg-ember-gradient px-5 text-[14px] font-bold text-white"
+          size="md"
         >
           Cerca un professionista
-        </Link>
-        <Link
+        </Button>
+        <Button
           href="/"
-          className="pressable inline-flex h-11 items-center rounded-2xl border border-line px-5 text-[14px] font-bold text-ink"
+          variant="outline"
+          size="md"
         >
           Torna alla home
-        </Link>
+        </Button>
       </div>
     </div>
   );

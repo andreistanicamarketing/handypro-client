@@ -32,3 +32,10 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Tooling locale (skill di Claude Code / agenti, output di /brag)
+.claude/settings.local.json
+.claude/skills/
+.agents/
+skills-lock.json
+brag-output/

@@ -39,13 +39,6 @@ const config: Config = {
           soft: '#E3F2EA',
         },
         line: '#E9E2D8',
-        // alias legacy (componenti esistenti)
-        brand: {
-          blue: '#1A3557',
-          orange: '#FF6600',
-          text: '#152238',
-          grey: '#5C6B82',
-        },
       },
       fontFamily: {
         display: ['Inter', 'system-ui', 'sans-serif'],

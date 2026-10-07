@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
+import Button from '@/components/ui/Button';
 
 export const metadata: Metadata = {
   title: 'Come funziona — Handy Pro',
@@ -73,18 +73,17 @@ export default function ComeFunzionaPage() {
         </section>
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link
+          <Button
             href="/cerca"
-            className="pressable inline-flex h-12 items-center rounded-2xl bg-ember-gradient px-6 text-[15px] font-bold text-white"
           >
             Cerca un professionista
-          </Link>
-          <Link
+          </Button>
+          <Button
             href="/registrati?tipo=professionista"
-            className="pressable inline-flex h-12 items-center rounded-2xl border border-line bg-white px-6 text-[15px] font-bold text-ink"
+            variant="outline"
           >
             Crea il tuo profilo
-          </Link>
+          </Button>
         </div>
       </div>
     </div>

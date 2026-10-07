@@ -12,7 +12,7 @@ export default function CercaPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center pt-16 text-brand-grey">
+        <div className="flex min-h-screen items-center justify-center pt-16 text-ink-mute">
           Caricamento…
         </div>
       }

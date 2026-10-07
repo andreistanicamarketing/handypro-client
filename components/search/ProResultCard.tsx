@@ -8,6 +8,7 @@ import { ShieldCheck, MapPin, Star } from 'lucide-react';
 import type { Pro } from '@/lib/data';
 import AvailabilityGrid from './AvailabilityGrid';
 import { cn } from '@/lib/utils';
+import Button from '@/components/ui/Button';
 
 interface ProResultCardProps {
   pro: Pro;
@@ -106,12 +107,14 @@ export default function ProResultCard({ pro, isHighlighted, onHover }: ProResult
             ))}
           </ul>
 
-          <Link
+          <Button
             href={`/pro/${pro.slug}`}
-            className="pressable mt-3.5 hidden h-10 items-center justify-center rounded-xl border border-ink/15 px-4 text-[13.5px] font-bold text-ink hover:bg-ink hover:text-white lg:inline-flex"
+            variant="subtle"
+            size="sm"
+            className="mt-3.5 hidden lg:inline-flex"
           >
             Vedi profilo
-          </Link>
+          </Button>
         </div>
 
         {/* ── Disponibilità ── */}
@@ -123,12 +126,14 @@ export default function ProResultCard({ pro, isHighlighted, onHover }: ProResult
         </div>
 
         {/* CTA profilo — solo mobile, a tutta larghezza */}
-        <Link
+        <Button
           href={`/pro/${pro.slug}`}
-          className="pressable flex h-11 items-center justify-center rounded-xl border border-ink/15 text-[14px] font-bold text-ink active:bg-ink active:text-white lg:hidden"
+          variant="subtle"
+          size="md"
+          className="flex active:bg-ink active:text-white lg:hidden"
         >
           Vedi profilo completo
-        </Link>
+        </Button>
       </div>
     </article>
   );
