@@ -6,10 +6,10 @@ import { List, Map as MapIcon, X, BadgeCheck } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
 import ProResultCard from '@/components/search/ProResultCard';
 import MapView from '@/components/map/MapView';
-import { CATEGORIES } from '@/lib/categories';
+import { CATEGORIES, cityCenter } from '@/lib/categories';
 import { searchPros, type Pro } from '@/lib/data';
 import type { PriceRange } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, distanceKm } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
@@ -52,6 +52,7 @@ export default function CercaClient() {
     };
   }, [resolvedCategory, zona, priceFilter, verifiedOnly, reloadKey]);
 
+  const center = cityCenter(zona);
   const categoryLabel = CATEGORIES.find((c) => c.slug === resolvedCategory)?.label;
   const hasActiveFilters = Boolean(priceFilter) || verifiedOnly;
 
@@ -62,8 +63,6 @@ export default function CercaClient() {
       lat: p.lat!,
       lon: p.lon!,
       label: p.name,
-      sublabel: `${p.categoryLabel} · ${p.zona}`,
-      href: `/pro/${p.slug}`,
     }));
 
   const filterChip = (active: boolean) =>
@@ -165,7 +164,7 @@ export default function CercaClient() {
           ) : results === null ? (
             <div className="flex flex-col gap-3.5" aria-label="Caricamento risultati">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-[210px] animate-pulse rounded-card border border-line bg-white/70 shadow-chip" />
+                <div key={i} className="h-[130px] animate-pulse rounded-card border border-line bg-white/70 shadow-chip" />
               ))}
             </div>
           ) : results.length === 0 ? (
@@ -181,6 +180,11 @@ export default function CercaClient() {
                 <div key={pro.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}>
                   <ProResultCard
                     pro={pro}
+                    distanceKm={
+                      center && pro.lat !== null && pro.lon !== null
+                        ? distanceKm(center, [pro.lat, pro.lon])
+                        : null
+                    }
                     isHighlighted={highlightedId === pro.id}
                     onHover={setHighlightedId}
                   />
@@ -205,6 +209,7 @@ export default function CercaClient() {
           <MapView
             markers={markers}
             highlightedId={highlightedId}
+            onSelect={setHighlightedId}
             height="100%"
             forceResize={mobileView === 'mappa'}
           />
@@ -216,7 +221,7 @@ export default function CercaClient() {
         type="button"
         onClick={() => setMobileView(mobileView === 'lista' ? 'mappa' : 'lista')}
         className="pressable fixed left-1/2 z-40 inline-flex h-11 -translate-x-1/2 items-center gap-2 rounded-pill bg-ink px-5 text-[13.5px] font-bold text-white shadow-lift lg:hidden"
-        style={{ bottom: 'calc(80px + var(--safe-bottom))' }}
+        style={{ bottom: 'calc(104px + var(--safe-bottom))' }}
       >
         {mobileView === 'lista' ? (
           <>

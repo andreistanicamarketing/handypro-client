@@ -19,10 +19,27 @@ export const CATEGORIES: Category[] = [
   { slug: 'fabbro', label: 'Fabbro', icon: 'KeyRound', description: 'Serrature, infissi, urgenze' },
 ];
 
-export const CITIES = [
-  'Milano', 'Roma', 'Torino', 'Bologna', 'Firenze',
-  'Napoli', 'Monza', 'Bergamo', 'Brescia', 'Sesto San Giovanni',
-];
+// Centro città [lat, lon]: riferimento per la distanza nelle card risultato.
+export const CITY_CENTERS: Record<string, [number, number]> = {
+  Milano: [45.4642, 9.19],
+  Roma: [41.9028, 12.4964],
+  Torino: [45.0703, 7.6869],
+  Bologna: [44.4949, 11.3426],
+  Firenze: [43.7696, 11.2558],
+  Napoli: [40.8518, 14.2681],
+  Monza: [45.5845, 9.2744],
+  Bergamo: [45.6983, 9.6773],
+  Brescia: [45.5416, 10.2118],
+  'Sesto San Giovanni': [45.5362, 9.2359],
+};
+
+export const CITIES = Object.keys(CITY_CENTERS);
+
+/** Centro della città cercata (match case-insensitive), se la conosciamo. */
+export function cityCenter(name: string): [number, number] | null {
+  const key = Object.keys(CITY_CENTERS).find((c) => c.toLowerCase() === name.trim().toLowerCase());
+  return key ? CITY_CENTERS[key] : null;
+}
 
 export function categoryLabel(slug: string): string {
   return CATEGORIES.find((c) => c.slug === slug)?.label ?? slug;

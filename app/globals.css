@@ -80,9 +80,9 @@ a {
     display: none;
   }
 
-  /* Padding per la bottom nav su mobile (+ safe area iOS) */
+  /* Spazio sotto la tab bar flottante su mobile (+ safe area iOS) */
   .pb-bottom-nav {
-    padding-bottom: calc(76px + var(--safe-bottom));
+    padding-bottom: calc(110px + var(--safe-bottom));
   }
   @media (min-width: 768px) {
     .pb-bottom-nav {
@@ -100,15 +100,24 @@ a {
   }
 }
 
-/* ── Leaflet: coerenza con il design system ── */
+/* ── Leaflet: mappa virata al crema ── */
 .leaflet-container {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #efe9df; /* fallback caldo mentre le tile caricano */
+  background: #f3ede3;
 }
-.leaflet-popup-content-wrapper {
-  border-radius: 14px;
-  box-shadow: 0 8px 28px -8px rgba(21, 34, 56, 0.3);
+/* Tile OSM → base crema, strade chiare, niente verdi/blu saturi.
+   Da ritarare se si cambia provider. */
+.leaflet-tile-pane {
+  filter: grayscale(0.85) sepia(0.35) brightness(1.06) contrast(0.88) saturate(0.7);
 }
-.leaflet-popup-content {
-  margin: 12px 14px;
+.leaflet-container .leaflet-control-attribution {
+  font-size: 9.5px;
+  color: var(--ink-faint, #8a96a8);
+  background: rgba(250, 246, 240, 0.8);
+  border-radius: 4px 0 0 0;
+}
+@media (max-width: 767px) {
+  .leaflet-control-zoom {
+    display: none;
+  }
 }

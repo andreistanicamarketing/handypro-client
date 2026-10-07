@@ -1,4 +1,4 @@
-// Mappa risultati stile Doctolib — Leaflet, solo client (next/dynamic, no SSR).
+// Mappa crema con pin a goccia — Leaflet, solo client (next/dynamic, no SSR).
 'use client';
 
 import dynamic from 'next/dynamic';
@@ -9,8 +9,6 @@ export interface MapMarker {
   lat: number;
   lon: number;
   label: string;
-  sublabel?: string;
-  href?: string;
 }
 
 interface MapViewProps {
@@ -19,6 +17,8 @@ interface MapViewProps {
   zoom?: number;
   height?: number | string;
   highlightedId?: string | null;
+  /** Tap su un pin */
+  onSelect?: (id: string) => void;
   /** Cambia valore per forzare map.invalidateSize() — utile quando il container
    *  passa da display:none a visibile (mobile overlay). */
   forceResize?: boolean;
@@ -27,23 +27,28 @@ interface MapViewProps {
 const MapViewInner = dynamic(
   async () => {
     const L = (await import('leaflet')).default;
-    const { MapContainer, TileLayer, Marker, Popup, useMap } = await import('react-leaflet');
+    const { MapContainer, TileLayer, Marker, useMap } = await import('react-leaflet');
     const { useEffect } = await import('react');
 
+    // Goccia = quadrato con un angolo vivo, ruotato di -45° → la punta guarda in basso.
     function makePin(highlighted: boolean) {
-      const bg = highlighted ? '#FF6600' : '#152238';
-      const size = highlighted ? 38 : 32;
+      const size = highlighted ? 40 : 30;
+      const border = highlighted ? 3 : 2.5;
+      const dot = highlighted ? 12 : 8;
+      const tipY = size / 2 + size / Math.SQRT2; // punta = centro + semidiagonale
       return L.divIcon({
         className: '',
         iconSize: [size, size],
-        iconAnchor: [size / 2, size],
-        popupAnchor: [0, -size],
-        html: `<div style="width:${size}px;height:${size}px;position:relative;">
-          <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${bg}" stroke="white" stroke-width="1">
-            <path d="M12 0C7 0 3 4 3 9c0 6.5 9 15 9 15s9-8.5 9-15c0-5-4-9-9-9z"/>
-            <circle cx="12" cy="9" r="3.4" fill="white"/>
-          </svg>
-        </div>`,
+        iconAnchor: [size / 2, tipY],
+        html: `<div style="position:relative;width:${size}px;height:${size}px">${
+          highlighted
+            ? `<div style="position:absolute;left:50%;top:${tipY - 5}px;width:26px;height:10px;margin-left:-13px;border-radius:50%;background:rgba(255,102,0,.3)"></div>`
+            : ''
+        }<div style="position:absolute;inset:0;box-sizing:border-box;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${
+          highlighted ? '#FF6600' : '#FF7A1F'
+        };border:${border}px solid #fff;box-shadow:-2px 4px 10px -2px rgba(21,34,56,.4)"></div><div style="position:absolute;left:50%;top:50%;width:${dot}px;height:${dot}px;margin:-${dot / 2}px 0 0 -${dot / 2}px;border-radius:50%;background:${
+          highlighted ? '#152238' : '#fff'
+        }"></div></div>`,
       });
     }
 
@@ -78,6 +83,7 @@ const MapViewInner = dynamic(
       zoom = 12,
       height = '100%',
       highlightedId = null,
+      onSelect,
       forceResize,
     }: MapViewProps) {
       return (
@@ -100,26 +106,9 @@ const MapViewInner = dynamic(
               position={[marker.lat, marker.lon]}
               icon={makePin(marker.id === highlightedId)}
               zIndexOffset={marker.id === highlightedId ? 1000 : 0}
-            >
-              <Popup>
-                <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 160 }}>
-                  <strong style={{ display: 'block', marginBottom: 2 }}>{marker.label}</strong>
-                  {marker.sublabel && (
-                    <span style={{ color: '#6B7280', fontSize: 12, display: 'block', marginBottom: 6 }}>
-                      {marker.sublabel}
-                    </span>
-                  )}
-                  {marker.href && (
-                    <a
-                      href={marker.href}
-                      style={{ color: '#1A3557', fontWeight: 600, fontSize: 13 }}
-                    >
-                      Vedi profilo →
-                    </a>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
+              title={marker.label}
+              eventHandlers={{ click: () => onSelect?.(marker.id) }}
+            />
           ))}
         </MapContainer>
       );
@@ -130,7 +119,7 @@ const MapViewInner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full min-h-[300px] w-full items-center justify-center bg-gray-100 text-sm text-ink-mute">
+      <div className="flex h-full min-h-[300px] w-full items-center justify-center bg-[#F3EDE3] text-sm text-ink-mute">
         Caricamento mappa…
       </div>
     ),

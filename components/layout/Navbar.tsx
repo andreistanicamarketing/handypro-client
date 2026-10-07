@@ -83,7 +83,7 @@ export default function Navbar() {
               key={l.href}
               href={l.href}
               className={cn(
-                'pressable rounded-pill px-4 py-2 text-[14px] font-semibold transition-colors',
+                'pressable whitespace-nowrap rounded-pill px-4 py-2 text-[14px] font-semibold transition-colors',
                 isActive(l.href)
                   ? 'bg-sand text-ink'
                   : 'text-ink-mute hover:bg-sand/60 hover:text-ink'

@@ -203,9 +203,10 @@ export default function ProProfileClient({
                 </div>
                 <div className="h-[200px] md:h-[260px]">
                   <MapView
-                    markers={[{ id: pro.id, lat: pro.lat, lon: pro.lon, label: pro.name, sublabel: pro.zona }]}
+                    markers={[{ id: pro.id, lat: pro.lat, lon: pro.lon, label: pro.name }]}
                     center={[pro.lat, pro.lon]}
                     zoom={13}
+                    highlightedId={pro.id}
                     height="100%"
                   />
                 </div>
